@@ -1,0 +1,2742 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>PBK PM Inspection System V2</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap');
+        * { font-family: 'Inter', sans-serif; }
+        
+        body { background: #f0f2f5; margin: 0; }
+        
+        .sidebar {
+            width: 260px;
+            background: linear-gradient(180deg, #1a1f36 0%, #0d1025 100%);
+            min-height: 100vh;
+            position: fixed;
+            left: 0;
+            top: 0;
+            padding: 20px 0;
+            z-index: 100;
+            overflow-y: auto;
+        }
+        
+        .main-content {
+            margin-left: 260px;
+            padding: 24px;
+            min-height: 100vh;
+        }
+        
+        .nav-item {
+            padding: 12px 24px;
+            color: #8b92a5;
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            cursor: pointer;
+            font-size: 14px;
+            transition: all 0.2s;
+            border-left: 3px solid transparent;
+        }
+        
+        .nav-item:hover { background: rgba(255,255,255,0.05); color: #fff; }
+        .nav-item.active { 
+            background: rgba(99, 102, 241, 0.15); 
+            color: #818cf8; 
+            border-left-color: #818cf8;
+        }
+        
+        .card {
+            background: white;
+            border-radius: 16px;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.08);
+            padding: 24px;
+            margin-bottom: 20px;
+        }
+        
+        .stat-card {
+            background: white;
+            border-radius: 16px;
+            padding: 20px;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.08);
+        }
+        
+        .badge {
+            padding: 4px 10px;
+            border-radius: 20px;
+            font-size: 12px;
+            font-weight: 600;
+        }
+        
+        .badge-red { background: #fee2e2; color: #dc2626; }
+        .badge-yellow { background: #fef3c7; color: #d97706; }
+        .badge-green { background: #d1fae5; color: #059669; }
+        .badge-blue { background: #dbeafe; color: #2563eb; }
+        .badge-purple { background: #ede9fe; color: #7c3aed; }
+        
+        .tab-content { display: none; }
+        .tab-content.active { display: block; animation: fadeIn 0.3s ease; }
+        
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+        
+        .inspection-item {
+            background: #f8fafc;
+            border-radius: 12px;
+            padding: 20px;
+            margin-bottom: 16px;
+            border: 1px solid #e2e8f0;
+            transition: all 0.2s;
+        }
+        
+        .inspection-item:hover {
+            border-color: #818cf8;
+            box-shadow: 0 4px 12px rgba(99, 102, 241, 0.1);
+        }
+        
+        .inspection-item.completed {
+            border-color: #10b981;
+            background: #f0fdf4;
+        }
+        
+        .check-btn {
+            padding: 10px 20px;
+            border-radius: 8px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.2s;
+            border: 2px solid transparent;
+            font-size: 14px;
+        }
+        
+        .check-btn.pass {
+            background: #d1fae5;
+            color: #059669;
+            border-color: #059669;
+        }
+        
+        .check-btn.pass:hover, .check-btn.pass.selected {
+            background: #059669;
+            color: white;
+        }
+        
+        .check-btn.fail {
+            background: #fee2e2;
+            color: #dc2626;
+            border-color: #dc2626;
+        }
+        
+        .check-btn.fail:hover, .check-btn.fail.selected {
+            background: #dc2626;
+            color: white;
+        }
+        
+        .video-btn {
+            width: 36px;
+            height: 36px;
+            border-radius: 8px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            transition: all 0.2s;
+            font-size: 14px;
+        }
+        
+        .video-btn.active {
+            background: linear-gradient(135deg, #ef4444 0%, #f97316 100%);
+            color: white;
+        }
+        
+        .video-btn.inactive {
+            background: #e5e7eb;
+            color: #9ca3af;
+        }
+        
+        .worker-card {
+            padding: 12px 16px;
+            border-radius: 10px;
+            cursor: pointer;
+            transition: all 0.2s;
+            border: 2px solid transparent;
+            background: #f8fafc;
+        }
+        
+        .worker-card:hover {
+            background: rgba(99, 102, 241, 0.05);
+        }
+        
+        .worker-card.selected {
+            background: rgba(99, 102, 241, 0.1);
+            border-color: #818cf8;
+        }
+        
+        .btn-primary {
+            background: linear-gradient(135deg, #6366f1 0%, #8b5cf6 100%);
+            color: white;
+            padding: 12px 32px;
+            border-radius: 10px;
+            font-weight: 600;
+            border: none;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+        
+        .btn-primary:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(99, 102, 241, 0.4);
+        }
+        
+        .btn-secondary {
+            background: #f1f5f9;
+            color: #475569;
+            padding: 10px 20px;
+            border-radius: 8px;
+            font-weight: 500;
+            border: none;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+        
+        .btn-secondary:hover {
+            background: #e2e8f0;
+        }
+        
+        .input-field {
+            padding: 10px 14px;
+            border: 1px solid #e5e7eb;
+            border-radius: 8px;
+            font-size: 14px;
+            width: 100%;
+            transition: all 0.2s;
+        }
+        
+        .input-field:focus {
+            outline: none;
+            border-color: #818cf8;
+            box-shadow: 0 0 0 3px rgba(129, 140, 248, 0.1);
+        }
+        
+        .input-sm {
+            padding: 8px 12px;
+            width: 100px;
+            text-align: center;
+        }
+        
+        .table-row:hover { background: #f9fafb; }
+        
+        .period-tab {
+            padding: 10px 20px;
+            border-radius: 8px;
+            cursor: pointer;
+            font-weight: 500;
+            transition: all 0.2s;
+        }
+        
+        .period-tab.active {
+            background: #6366f1;
+            color: white;
+        }
+        
+        .period-tab:not(.active) {
+            background: #f1f5f9;
+            color: #64748b;
+        }
+        
+        .period-tab:not(.active):hover {
+            background: #e2e8f0;
+        }
+        
+        .measurement-box {
+            background: #f8fafc;
+            border: 1px solid #e2e8f0;
+            border-radius: 8px;
+            padding: 12px;
+        }
+        
+        .spec-badge {
+            background: #eff6ff;
+            color: #1d4ed8;
+            padding: 4px 12px;
+            border-radius: 6px;
+            font-family: monospace;
+            font-size: 13px;
+        }
+        
+        .auto-judgment {
+            padding: 8px 16px;
+            border-radius: 8px;
+            font-weight: 600;
+            font-size: 14px;
+        }
+        
+        .auto-judgment.pass {
+            background: #d1fae5;
+            color: #059669;
+        }
+        
+        .auto-judgment.fail {
+            background: #fee2e2;
+            color: #dc2626;
+        }
+        
+        .auto-judgment.pending {
+            background: #f1f5f9;
+            color: #64748b;
+        }
+    </style>
+</head>
+<body>
+    <!-- Sidebar -->
+    <div class="sidebar">
+        <div class="px-6 mb-8">
+            <div class="flex items-center gap-3">
+                <div class="w-10 h-10 bg-gradient-to-br from-indigo-500 to-purple-600 rounded-xl flex items-center justify-center">
+                    <i class="fas fa-clipboard-check text-white"></i>
+                </div>
+                <div>
+                    <div class="text-white font-bold">PBK</div>
+                    <div class="text-xs text-gray-500">PM Inspection V2</div>
+                </div>
+            </div>
+        </div>
+        
+        <div class="text-xs text-gray-600 px-6 mb-2 uppercase tracking-wider">점검 기록</div>
+        <div class="nav-item active" onclick="showTab('daily-check')">
+            <i class="fas fa-calendar-day w-5"></i> Daily 점검
+            <span class="ml-auto bg-blue-500 text-white text-xs px-2 py-0.5 rounded-full">D</span>
+        </div>
+        <div class="nav-item" onclick="showTab('monthly-check')">
+            <i class="fas fa-calendar-alt w-5"></i> Monthly 점검
+            <span class="ml-auto bg-purple-500 text-white text-xs px-2 py-0.5 rounded-full">M</span>
+        </div>
+        <div class="nav-item" onclick="showTab('biyearly-check')">
+            <i class="fas fa-calendar w-5"></i> Bi-yearly 점검
+            <span class="ml-auto bg-amber-500 text-white text-xs px-2 py-0.5 rounded-full">B</span>
+        </div>
+        
+        <div class="text-xs text-gray-600 px-6 mb-2 mt-6 uppercase tracking-wider">조회</div>
+        <div class="nav-item" onclick="showTab('history')">
+            <i class="fas fa-history w-5"></i> 점검 이력
+        </div>
+        <div class="nav-item" onclick="showTab('trend-analysis')">
+            <i class="fas fa-chart-line w-5"></i> 트렌드 분석
+        </div>
+        <div class="nav-item" onclick="showTab('reports')">
+            <i class="fas fa-chart-bar w-5"></i> 보고서
+        </div>
+        
+        <div class="text-xs text-gray-600 px-6 mb-2 mt-6 uppercase tracking-wider">관리</div>
+        <div class="nav-item" onclick="showTab('settings')">
+            <i class="fas fa-cog w-5"></i> 설정
+        </div>
+        
+        <!-- 오늘 현황 -->
+        <div class="px-4 mt-6">
+            <div class="bg-gray-800/50 rounded-xl p-4">
+                <div class="text-xs text-gray-500 mb-2">오늘 Daily 점검</div>
+                <div id="sidebar-daily-status" class="space-y-1 text-sm">
+                </div>
+            </div>
+        </div>
+        
+        <div class="px-4 mt-4 pb-20">
+            <div class="bg-gray-800/50 rounded-xl p-4">
+                <div class="text-xs text-gray-500">현재 일자</div>
+                <div class="text-white font-medium text-sm" id="current-date"></div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Main Content -->
+    <div class="main-content">
+        
+        <!-- ==================== DAILY 점검 ==================== -->
+        <div id="tab-daily-check" class="tab-content active">
+            <div class="mb-6">
+                <h1 class="text-2xl font-bold text-gray-900">Daily PM Inspection</h1>
+                <p class="text-gray-500">매일 수행하는 ESD 안전 및 장비 점검</p>
+            </div>
+            
+            <!-- 작업자별 점검 섹션 -->
+            <div class="card">
+                <div class="flex items-center justify-between mb-4">
+                    <h3 class="font-bold text-gray-900">
+                        <i class="fas fa-user-check text-indigo-500 mr-2"></i>작업자별 점검
+                    </h3>
+                    <span class="badge badge-blue">작업자 각각 수행</span>
+                </div>
+                
+                <!-- 작업자 선택 -->
+                <div class="mb-6">
+                    <label class="text-sm font-medium text-gray-700 mb-2 block">작업자 선택</label>
+                    <div class="grid grid-cols-5 gap-3" id="daily-worker-selection">
+                    </div>
+                </div>
+                
+                <!-- 1. 제전화 -->
+                <div class="inspection-item" id="daily-item-esd">
+                    <div class="flex items-start justify-between">
+                        <div class="flex-1">
+                            <div class="flex items-center gap-3 mb-2">
+                                <span class="w-6 h-6 bg-indigo-100 text-indigo-600 rounded-full flex items-center justify-center text-sm font-bold">1</span>
+                                <h4 class="font-bold text-gray-900">제전화 (ESD Shoes)</h4>
+                                <div class="video-btn inactive" onclick="openVideo('esd')" title="측정 방법 영상">
+                                    <i class="fas fa-play"></i>
+                                </div>
+                            </div>
+                            <div class="ml-9 grid grid-cols-2 gap-4">
+                                <div>
+                                    <div class="text-xs text-gray-500 mb-1">측정 방법</div>
+                                    <div class="text-sm text-gray-700">제전화 착용 → Both 버튼 → 손바닥 접촉</div>
+                                </div>
+                                <div>
+                                    <div class="text-xs text-gray-500 mb-1">Pass Spec</div>
+                                    <span class="spec-badge">10⁵Ω ~ 10⁸Ω</span>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="flex gap-2">
+                            <button class="check-btn pass" onclick="setDailyResult('esd', 'Pass')">Pass</button>
+                            <button class="check-btn fail" onclick="setDailyResult('esd', 'Fail')">Fail</button>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- 2. 어스링 -->
+                <div class="inspection-item" id="daily-item-wrist">
+                    <div class="flex items-start justify-between">
+                        <div class="flex-1">
+                            <div class="flex items-center gap-3 mb-2">
+                                <span class="w-6 h-6 bg-indigo-100 text-indigo-600 rounded-full flex items-center justify-center text-sm font-bold">2</span>
+                                <h4 class="font-bold text-gray-900">어스링 (Wrist Strap)</h4>
+                                <div class="video-btn inactive" onclick="openVideo('wrist')" title="측정 방법 영상">
+                                    <i class="fas fa-play"></i>
+                                </div>
+                            </div>
+                            <div class="ml-9 grid grid-cols-2 gap-4">
+                                <div>
+                                    <div class="text-xs text-gray-500 mb-1">측정 방법</div>
+                                    <div class="text-sm text-gray-700">어스링 착용 → Wrist 버튼 → 손바닥 접촉</div>
+                                </div>
+                                <div>
+                                    <div class="text-xs text-gray-500 mb-1">Pass Spec</div>
+                                    <span class="spec-badge">10⁵Ω ~ 10⁸Ω</span>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="flex gap-2">
+                            <button class="check-btn pass" onclick="setDailyResult('wrist', 'Pass')">Pass</button>
+                            <button class="check-btn fail" onclick="setDailyResult('wrist', 'Fail')">Fail</button>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- 3. 전동드라이버 Torque -->
+                <div class="inspection-item" id="daily-item-torque">
+                    <div class="flex items-center gap-3 mb-3">
+                        <span class="w-6 h-6 bg-indigo-100 text-indigo-600 rounded-full flex items-center justify-center text-sm font-bold">3</span>
+                        <h4 class="font-bold text-gray-900">전동드라이버 Torque Check</h4>
+                        <div class="video-btn inactive" onclick="openVideo('torque')" title="측정 방법 영상">
+                            <i class="fas fa-play"></i>
+                        </div>
+                        <!-- 계측기 연결 상태 -->
+                        <div id="torque-connection-status" class="flex items-center gap-2 ml-2">
+                            <span class="w-2 h-2 rounded-full bg-gray-400" id="torque-status-dot"></span>
+                            <span class="text-xs text-gray-500" id="torque-status-text">연결 안됨</span>
+                        </div>
+                        <span class="spec-badge ml-auto">Spec: 12.32 ~ 16.67 lbf.in (14.5±15%)</span>
+                    </div>
+                    <div class="ml-9">
+                        <div class="measurement-box">
+                            <!-- 계측기 연결 패널 -->
+                            <div class="flex items-center gap-3 mb-4 pb-4 border-b border-gray-200">
+                                <select id="torque-port-select" class="input-field" style="width: 200px;">
+                                    <option value="">-- 포트 선택 --</option>
+                                </select>
+                                <button class="btn-secondary text-sm" onclick="refreshPorts()">
+                                    <i class="fas fa-sync-alt mr-1"></i>새로고침
+                                </button>
+                                <button id="torque-connect-btn" class="btn-primary text-sm" onclick="toggleTorqueConnection()">
+                                    <i class="fas fa-plug mr-1"></i>연결
+                                </button>
+                                <div id="torque-trend-warning" class="hidden ml-auto px-3 py-1 bg-amber-100 text-amber-700 rounded-lg text-xs">
+                                    <i class="fas fa-exclamation-triangle mr-1"></i>
+                                    <span id="torque-trend-text"></span>
+                                </div>
+                            </div>
+                            
+                            <div class="grid grid-cols-5 gap-4 items-end">
+                                <div>
+                                    <label class="text-xs text-gray-500 block mb-1">Tool ID</label>
+                                    <input type="text" id="torque-tool-id" class="input-field" placeholder="예: PT0020" onchange="checkToolTrend()">
+                                </div>
+                                <div>
+                                    <label class="text-xs text-gray-500 block mb-1">1회 (lbf.in)</label>
+                                    <input type="number" step="0.01" id="torque-1" class="input-field input-sm torque-input" onchange="judgeTorque()" readonly>
+                                    <div class="text-center mt-1">
+                                        <span id="torque-result-1" class="text-xs"></span>
+                                    </div>
+                                </div>
+                                <div>
+                                    <label class="text-xs text-gray-500 block mb-1">2회 (lbf.in)</label>
+                                    <input type="number" step="0.01" id="torque-2" class="input-field input-sm torque-input" onchange="judgeTorque()" readonly>
+                                    <div class="text-center mt-1">
+                                        <span id="torque-result-2" class="text-xs"></span>
+                                    </div>
+                                </div>
+                                <div>
+                                    <label class="text-xs text-gray-500 block mb-1">3회 (lbf.in)</label>
+                                    <input type="number" step="0.01" id="torque-3" class="input-field input-sm torque-input" onchange="judgeTorque()" readonly>
+                                    <div class="text-center mt-1">
+                                        <span id="torque-result-3" class="text-xs"></span>
+                                    </div>
+                                </div>
+                                <div>
+                                    <label class="text-xs text-gray-500 block mb-1">판정</label>
+                                    <div id="torque-judgment" class="auto-judgment pending">대기</div>
+                                </div>
+                            </div>
+                            <div class="mt-3 flex items-center gap-2">
+                                <button class="btn-secondary text-sm" onclick="clearTorqueMeasurement()">
+                                    <i class="fas fa-redo mr-1"></i>측정 초기화
+                                </button>
+                                <button class="btn-secondary text-sm" onclick="enableManualInput()">
+                                    <i class="fas fa-keyboard mr-1"></i>수동 입력
+                                </button>
+                                <span class="text-xs text-gray-400 ml-2">* 계측기 측정 시 자동 입력됩니다</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- 비고 & 제출 -->
+                <div class="mt-6 pt-4 border-t">
+                    <div class="mb-4">
+                        <label class="text-sm font-medium text-gray-700 mb-2 block">비고</label>
+                        <textarea id="daily-worker-remarks" class="input-field" rows="2" placeholder="특이사항 입력..."></textarea>
+                    </div>
+                    <button class="btn-primary" onclick="submitDailyWorkerCheck()">
+                        <i class="fas fa-check mr-2"></i>작업자 점검 완료
+                    </button>
+                </div>
+            </div>
+            
+            <!-- Safety Tester Hi-pot (1일 1회) -->
+            <div class="card">
+                <div class="flex items-center justify-between mb-4">
+                    <h3 class="font-bold text-gray-900">
+                        <i class="fas fa-bolt text-amber-500 mr-2"></i>Safety Tester Dummy Hi-pot Test
+                    </h3>
+                    <span class="badge badge-yellow">1일 1회 (담당자)</span>
+                </div>
+                
+                <div class="inspection-item" id="daily-item-hipot">
+                    <div class="grid grid-cols-2 gap-6">
+                        <div>
+                            <div class="text-sm font-medium text-gray-700 mb-3">Test 설정</div>
+                            <div class="space-y-2 text-sm">
+                                <div class="flex justify-between py-1 border-b border-gray-100">
+                                    <span class="text-gray-500">항목</span>
+                                    <span class="font-medium">DCW (내전압 Test)</span>
+                                </div>
+                                <div class="flex justify-between py-1 border-b border-gray-100">
+                                    <span class="text-gray-500">Test Voltage</span>
+                                    <span class="font-medium">1.5 kV</span>
+                                </div>
+                                <div class="flex justify-between py-1 border-b border-gray-100">
+                                    <span class="text-gray-500">Hi-Set</span>
+                                    <span class="font-medium">1.0 mA</span>
+                                </div>
+                            </div>
+                        </div>
+                        <div>
+                            <div class="text-sm font-medium text-gray-700 mb-3">검사 시료 판정</div>
+                            <div class="space-y-3">
+                                <div class="flex items-center justify-between p-3 bg-green-50 rounded-lg">
+                                    <div>
+                                        <div class="text-sm font-medium text-green-800">Pass 시료 (1490Ω)</div>
+                                        <div class="text-xs text-green-600">PASS로 판정되어야 함</div>
+                                    </div>
+                                    <div class="flex gap-2">
+                                        <button class="check-btn pass text-sm" onclick="setHipotResult('pass-sample', 'Pass')">Pass</button>
+                                        <button class="check-btn fail text-sm" onclick="setHipotResult('pass-sample', 'Fail')">Fail</button>
+                                    </div>
+                                </div>
+                                <div class="flex items-center justify-between p-3 bg-red-50 rounded-lg">
+                                    <div>
+                                        <div class="text-sm font-medium text-red-800">Fail 시료 (1510Ω)</div>
+                                        <div class="text-xs text-red-600">FAIL로 판정되어야 함</div>
+                                    </div>
+                                    <div class="flex gap-2">
+                                        <button class="check-btn pass text-sm" onclick="setHipotResult('fail-sample', 'Pass')">Pass</button>
+                                        <button class="check-btn fail text-sm" onclick="setHipotResult('fail-sample', 'Fail')">Fail</button>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="mt-4 pt-4 border-t">
+                        <div class="flex items-center gap-4">
+                            <div>
+                                <label class="text-xs text-gray-500 block mb-1">검사자 ID</label>
+                                <input type="text" id="hipot-inspector" class="input-field" style="width:150px" placeholder="검사자 선택/입력">
+                            </div>
+                            <div class="flex-1">
+                                <label class="text-xs text-gray-500 block mb-1">비고</label>
+                                <input type="text" id="hipot-remarks" class="input-field" placeholder="특이사항...">
+                            </div>
+                            <div>
+                                <label class="text-xs text-gray-500 block mb-1">&nbsp;</label>
+                                <button class="btn-primary" onclick="submitHipotCheck()">
+                                    <i class="fas fa-check mr-2"></i>점검 완료
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- ==================== MONTHLY 점검 ==================== -->
+        <div id="tab-monthly-check" class="tab-content">
+            <div class="mb-6">
+                <h1 class="text-2xl font-bold text-gray-900">Monthly PM Inspection</h1>
+                <p class="text-gray-500">매월 수행하는 장비 및 안전용품 점검</p>
+            </div>
+            
+            <div class="card">
+                <div class="flex items-center gap-4 mb-6">
+                    <div>
+                        <label class="text-xs text-gray-500 block mb-1">점검 연월</label>
+                        <input type="month" id="monthly-period" class="input-field" style="width:150px">
+                    </div>
+                    <div>
+                        <label class="text-xs text-gray-500 block mb-1">검사자 ID</label>
+                        <input type="text" id="monthly-inspector" class="input-field" style="width:150px" placeholder="검사자 입력">
+                    </div>
+                </div>
+                
+                <!-- 1. Safety Tester Dummy Load Test -->
+                <div class="inspection-item" id="monthly-item-load">
+                    <div class="flex items-center gap-3 mb-4">
+                        <span class="w-6 h-6 bg-purple-100 text-purple-600 rounded-full flex items-center justify-center text-sm font-bold">1</span>
+                        <h4 class="font-bold text-gray-900">Safety Tester Dummy Load Test</h4>
+                        <span class="badge badge-purple">GPT-9904</span>
+                    </div>
+                    <div class="ml-9">
+                        <div class="text-sm text-gray-600 mb-4">더미로드 저항값 측정으로 Safety Tester 정상 동작 확인</div>
+                        <div class="grid grid-cols-2 gap-4">
+                            <div class="p-4 bg-green-50 rounded-lg">
+                                <div class="text-sm font-medium text-green-800 mb-2">Pass 시료 체크</div>
+                                <div class="text-xs text-green-600 mb-3">Spec: 1510 ± 3Ω</div>
+                                <div class="flex gap-2">
+                                    <button class="check-btn pass" onclick="setMonthlyResult('load-pass', 'Pass')">Pass</button>
+                                    <button class="check-btn fail" onclick="setMonthlyResult('load-pass', 'Fail')">Fail</button>
+                                </div>
+                            </div>
+                            <div class="p-4 bg-red-50 rounded-lg">
+                                <div class="text-sm font-medium text-red-800 mb-2">Fail 시료 체크</div>
+                                <div class="text-xs text-red-600 mb-3">Spec: 1490 ± 3Ω</div>
+                                <div class="flex gap-2">
+                                    <button class="check-btn pass" onclick="setMonthlyResult('load-fail', 'Pass')">Pass</button>
+                                    <button class="check-btn fail" onclick="setMonthlyResult('load-fail', 'Fail')">Fail</button>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- 2. Insulating Gloves -->
+                <div class="inspection-item" id="monthly-item-gloves">
+                    <div class="flex items-center gap-3 mb-4">
+                        <span class="w-6 h-6 bg-purple-100 text-purple-600 rounded-full flex items-center justify-center text-sm font-bold">2</span>
+                        <h4 class="font-bold text-gray-900">Insulating Gloves (절연장갑)</h4>
+                    </div>
+                    <div class="ml-9">
+                        <div class="text-sm text-gray-600 mb-4">유효기간 확인 (개봉일로부터 6개월 이내)</div>
+                        <div class="measurement-box">
+                            <div class="grid grid-cols-3 gap-4 items-end">
+                                <div>
+                                    <label class="text-xs text-gray-500 block mb-1">개봉일</label>
+                                    <input type="date" id="gloves-open-date" class="input-field" onchange="checkGlovesExpiry()">
+                                </div>
+                                <div>
+                                    <label class="text-xs text-gray-500 block mb-1">만료 예정일</label>
+                                    <input type="text" id="gloves-expiry" class="input-field" readonly placeholder="자동 계산">
+                                </div>
+                                <div>
+                                    <label class="text-xs text-gray-500 block mb-1">상태</label>
+                                    <div id="gloves-status" class="auto-judgment pending">확인 필요</div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- 3. Machine Vision Tool -->
+                <div class="inspection-item" id="monthly-item-vision">
+                    <div class="flex items-center gap-3 mb-4">
+                        <span class="w-6 h-6 bg-purple-100 text-purple-600 rounded-full flex items-center justify-center text-sm font-bold">3</span>
+                        <h4 class="font-bold text-gray-900">Machine Vision Test Tool</h4>
+                    </div>
+                    <div class="ml-9">
+                        <div class="text-sm text-gray-600 mb-4">외관 점검 - 유실 및 파손 여부 확인</div>
+                        <div class="flex items-center gap-4">
+                            <div class="flex gap-2">
+                                <button class="check-btn pass" onclick="setMonthlyResult('vision', 'Pass')">정상 (Pass)</button>
+                                <button class="check-btn fail" onclick="setMonthlyResult('vision', 'Fail')">이상 (Fail)</button>
+                            </div>
+                            <input type="text" id="vision-remarks" class="input-field flex-1" placeholder="이상 발견 시 내용 기재...">
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- 비고 & 제출 -->
+                <div class="mt-6 pt-4 border-t">
+                    <div class="mb-4">
+                        <label class="text-sm font-medium text-gray-700 mb-2 block">종합 비고</label>
+                        <textarea id="monthly-remarks" class="input-field" rows="2" placeholder="특이사항 입력..."></textarea>
+                    </div>
+                    <button class="btn-primary" onclick="submitMonthlyCheck()">
+                        <i class="fas fa-check mr-2"></i>Monthly 점검 완료
+                    </button>
+                </div>
+            </div>
+        </div>
+
+        <!-- ==================== BI-YEARLY 점검 ==================== -->
+        <div id="tab-biyearly-check" class="tab-content">
+            <div class="mb-6">
+                <h1 class="text-2xl font-bold text-gray-900">Bi-yearly PM Inspection</h1>
+                <p class="text-gray-500">반기별 수행하는 ESD 접지 상태 점검</p>
+            </div>
+            
+            <div class="card">
+                <div class="flex items-center gap-4 mb-6">
+                    <div>
+                        <label class="text-xs text-gray-500 block mb-1">점검 반기</label>
+                        <select id="biyearly-period" class="input-field" style="width:150px">
+                            <option value="2025-H1">2025년 상반기</option>
+                            <option value="2025-H2">2025년 하반기</option>
+                            <option value="2026-H1" selected>2026년 상반기</option>
+                            <option value="2026-H2">2026년 하반기</option>
+                        </select>
+                    </div>
+                    <div>
+                        <label class="text-xs text-gray-500 block mb-1">검사자 ID</label>
+                        <input type="text" id="biyearly-inspector" class="input-field" style="width:150px" placeholder="검사자 입력">
+                    </div>
+                    <div>
+                        <label class="text-xs text-gray-500 block mb-1">측정 장비</label>
+                        <span class="spec-badge">DVM (멀티미터)</span>
+                    </div>
+                </div>
+                
+                <div class="inspection-item">
+                    <div class="flex items-center gap-3 mb-4">
+                        <i class="fas fa-table text-amber-500"></i>
+                        <h4 class="font-bold text-gray-900">Table ESD 접지 상태 점검</h4>
+                    </div>
+                    
+                    <div class="text-sm text-gray-600 mb-4">
+                        측정 방법: GND Connected → OK / Not Connected → NG
+                    </div>
+                    
+                    <!-- 접지 대상 테이블 -->
+                    <table class="w-full">
+                        <thead>
+                            <tr class="border-b bg-gray-50">
+                                <th class="text-left py-3 px-4 text-xs font-semibold text-gray-500 uppercase">접지 대상</th>
+                                <th class="text-center py-3 px-4 text-xs font-semibold text-gray-500 uppercase">Spec (접지간 전기저항)</th>
+                                <th class="text-center py-3 px-4 text-xs font-semibold text-gray-500 uppercase">측정값</th>
+                                <th class="text-center py-3 px-4 text-xs font-semibold text-gray-500 uppercase">판정</th>
+                            </tr>
+                        </thead>
+                        <tbody id="esd-table-body">
+                            <tr class="table-row border-b">
+                                <td class="py-3 px-4 font-medium">제조설비</td>
+                                <td class="py-3 px-4 text-center"><span class="spec-badge">≤ 1000 kΩ</span></td>
+                                <td class="py-3 px-4 text-center"><input type="text" class="input-field input-sm esd-value" data-item="equipment" placeholder="측정값"></td>
+                                <td class="py-3 px-4 text-center">
+                                    <div class="flex gap-1 justify-center">
+                                        <button class="check-btn pass text-xs px-3 py-1" onclick="setEsdResult('equipment', 'Pass')">OK</button>
+                                        <button class="check-btn fail text-xs px-3 py-1" onclick="setEsdResult('equipment', 'Fail')">NG</button>
+                                    </div>
+                                </td>
+                            </tr>
+                            <tr class="table-row border-b">
+                                <td class="py-3 px-4 font-medium">작업 의자 및 이동 대차</td>
+                                <td class="py-3 px-4 text-center"><span class="spec-badge">≤ 1000 kΩ</span></td>
+                                <td class="py-3 px-4 text-center"><input type="text" class="input-field input-sm esd-value" data-item="chair" placeholder="측정값"></td>
+                                <td class="py-3 px-4 text-center">
+                                    <div class="flex gap-1 justify-center">
+                                        <button class="check-btn pass text-xs px-3 py-1" onclick="setEsdResult('chair', 'Pass')">OK</button>
+                                        <button class="check-btn fail text-xs px-3 py-1" onclick="setEsdResult('chair', 'Fail')">NG</button>
+                                    </div>
+                                </td>
+                            </tr>
+                            <tr class="table-row border-b">
+                                <td class="py-3 px-4 font-medium">작업대 표면</td>
+                                <td class="py-3 px-4 text-center"><span class="spec-badge">1Ω ~ 1GΩ</span></td>
+                                <td class="py-3 px-4 text-center"><input type="text" class="input-field input-sm esd-value" data-item="surface" placeholder="측정값"></td>
+                                <td class="py-3 px-4 text-center">
+                                    <div class="flex gap-1 justify-center">
+                                        <button class="check-btn pass text-xs px-3 py-1" onclick="setEsdResult('surface', 'Pass')">OK</button>
+                                        <button class="check-btn fail text-xs px-3 py-1" onclick="setEsdResult('surface', 'Fail')">NG</button>
+                                    </div>
+                                </td>
+                            </tr>
+                            <tr class="table-row border-b">
+                                <td class="py-3 px-4 font-medium">작업자용 손목띠</td>
+                                <td class="py-3 px-4 text-center"><span class="spec-badge">1MΩ ± 10%</span></td>
+                                <td class="py-3 px-4 text-center"><input type="text" class="input-field input-sm esd-value" data-item="wristband" placeholder="측정값"></td>
+                                <td class="py-3 px-4 text-center">
+                                    <div class="flex gap-1 justify-center">
+                                        <button class="check-btn pass text-xs px-3 py-1" onclick="setEsdResult('wristband', 'Pass')">OK</button>
+                                        <button class="check-btn fail text-xs px-3 py-1" onclick="setEsdResult('wristband', 'Fail')">NG</button>
+                                    </div>
+                                </td>
+                            </tr>
+                            <tr class="table-row border-b">
+                                <td class="py-3 px-4 font-medium">바닥 TILE (바닥재)</td>
+                                <td class="py-3 px-4 text-center"><span class="spec-badge">1MΩ ~ 100GΩ</span></td>
+                                <td class="py-3 px-4 text-center"><input type="text" class="input-field input-sm esd-value" data-item="floor" placeholder="측정값"></td>
+                                <td class="py-3 px-4 text-center">
+                                    <div class="flex gap-1 justify-center">
+                                        <button class="check-btn pass text-xs px-3 py-1" onclick="setEsdResult('floor', 'Pass')">OK</button>
+                                        <button class="check-btn fail text-xs px-3 py-1" onclick="setEsdResult('floor', 'Fail')">NG</button>
+                                    </div>
+                                </td>
+                            </tr>
+                            <tr class="table-row border-b">
+                                <td class="py-3 px-4 font-medium">도전성 MAT</td>
+                                <td class="py-3 px-4 text-center"><span class="spec-badge">1MΩ ~ 100MΩ</span></td>
+                                <td class="py-3 px-4 text-center"><input type="text" class="input-field input-sm esd-value" data-item="mat" placeholder="측정값"></td>
+                                <td class="py-3 px-4 text-center">
+                                    <div class="flex gap-1 justify-center">
+                                        <button class="check-btn pass text-xs px-3 py-1" onclick="setEsdResult('mat', 'Pass')">OK</button>
+                                        <button class="check-btn fail text-xs px-3 py-1" onclick="setEsdResult('mat', 'Fail')">NG</button>
+                                    </div>
+                                </td>
+                            </tr>
+                        </tbody>
+                    </table>
+                    
+                    <div class="mt-4 p-3 bg-blue-50 rounded-lg text-sm text-blue-700">
+                        <i class="fas fa-info-circle mr-2"></i>
+                        Static Dissipation (정전기 방전) 조건 확인 - 작업 시 발생하는 정전기를 효율적으로 방전시키기 위한 점검
+                    </div>
+                </div>
+                
+                <!-- 비고 & 제출 -->
+                <div class="mt-6 pt-4 border-t">
+                    <div class="mb-4">
+                        <label class="text-sm font-medium text-gray-700 mb-2 block">종합 비고</label>
+                        <textarea id="biyearly-remarks" class="input-field" rows="2" placeholder="특이사항 입력..."></textarea>
+                    </div>
+                    <button class="btn-primary" onclick="submitBiyearlyCheck()">
+                        <i class="fas fa-check mr-2"></i>Bi-yearly 점검 완료
+                    </button>
+                </div>
+            </div>
+        </div>
+
+        <!-- ==================== 점검 이력 ==================== -->
+        <div id="tab-history" class="tab-content">
+            <div class="mb-6">
+                <h1 class="text-2xl font-bold text-gray-900">점검 이력 조회</h1>
+                <p class="text-gray-500">기간별, 유형별 점검 기록 조회</p>
+            </div>
+            
+            <div class="card">
+                <div class="flex items-center gap-4 mb-6">
+                    <div class="flex gap-2">
+                        <button class="period-tab active" onclick="setHistoryType('daily')">Daily</button>
+                        <button class="period-tab" onclick="setHistoryType('monthly')">Monthly</button>
+                        <button class="period-tab" onclick="setHistoryType('biyearly')">Bi-yearly</button>
+                    </div>
+                    <div class="ml-auto flex gap-4">
+                        <input type="date" id="history-from" class="input-field" style="width:150px">
+                        <span class="text-gray-400 self-center">~</span>
+                        <input type="date" id="history-to" class="input-field" style="width:150px">
+                        <button class="btn-primary" onclick="loadHistory()">
+                            <i class="fas fa-search mr-2"></i>조회
+                        </button>
+                    </div>
+                </div>
+                
+                <table class="w-full">
+                    <thead>
+                        <tr class="border-b">
+                            <th class="text-left py-3 px-4 text-xs font-semibold text-gray-500 uppercase">일자</th>
+                            <th class="text-left py-3 px-4 text-xs font-semibold text-gray-500 uppercase">유형</th>
+                            <th class="text-left py-3 px-4 text-xs font-semibold text-gray-500 uppercase">작업자/검사자</th>
+                            <th class="text-center py-3 px-4 text-xs font-semibold text-gray-500 uppercase">항목</th>
+                            <th class="text-center py-3 px-4 text-xs font-semibold text-gray-500 uppercase">결과</th>
+                            <th class="text-left py-3 px-4 text-xs font-semibold text-gray-500 uppercase">비고</th>
+                        </tr>
+                    </thead>
+                    <tbody id="history-table-body">
+                        <tr><td colspan="6" class="py-8 text-center text-gray-400">조회 조건을 선택하세요</td></tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+
+        <!-- ==================== 트렌드 분석 ==================== -->
+        <div id="tab-trend-analysis" class="tab-content">
+            <div class="mb-6">
+                <h1 class="text-2xl font-bold text-gray-900">트렌드 분석</h1>
+                <p class="text-gray-500">Tool별 토크 측정 트렌드 및 교체 시기 알람</p>
+            </div>
+            
+            <!-- 경고 배너 -->
+            <div id="trend-warnings-banner" class="hidden mb-6 p-4 bg-amber-50 border border-amber-200 rounded-xl">
+                <div class="flex items-center gap-2 mb-3">
+                    <i class="fas fa-exclamation-triangle text-amber-500"></i>
+                    <span class="font-bold text-amber-700">점검 필요 Tool</span>
+                </div>
+                <div id="trend-warnings-list" class="space-y-2"></div>
+            </div>
+            
+            <div class="card">
+                <div class="flex items-center justify-between mb-4">
+                    <h3 class="font-bold text-gray-800">Tool별 트렌드 현황</h3>
+                    <button class="btn-primary" onclick="loadTrendAnalysis()">
+                        <i class="fas fa-sync-alt mr-2"></i>새로고침
+                    </button>
+                </div>
+                
+                <div class="overflow-x-auto">
+                    <table class="w-full">
+                        <thead>
+                            <tr class="border-b bg-gray-50">
+                                <th class="text-left py-3 px-4 font-semibold text-gray-600">Tool ID</th>
+                                <th class="text-center py-3 px-4 font-semibold text-gray-600">샘플 수</th>
+                                <th class="text-center py-3 px-4 font-semibold text-gray-600">평균값</th>
+                                <th class="text-center py-3 px-4 font-semibold text-gray-600">스펙 위치</th>
+                                <th class="text-center py-3 px-4 font-semibold text-gray-600">상태</th>
+                                <th class="text-center py-3 px-4 font-semibold text-gray-600">권장 조치</th>
+                            </tr>
+                        </thead>
+                        <tbody id="trend-table-body">
+                            <tr><td colspan="6" class="py-8 text-center text-gray-400">데이터를 불러오는 중...</td></tr>
+                        </tbody>
+                    </table>
+                </div>
+                
+                <!-- 스펙 범위 시각화 -->
+                <div class="mt-6 p-4 bg-gray-50 rounded-lg">
+                    <div class="text-sm text-gray-600 mb-2">스펙 범위 (Torque: 12.32 ~ 16.67 lbf.in)</div>
+                    <div class="relative h-8 bg-gradient-to-r from-red-200 via-green-200 to-red-200 rounded-full">
+                        <div class="absolute left-0 top-0 h-full w-[10%] bg-red-300 rounded-l-full opacity-50"></div>
+                        <div class="absolute right-0 top-0 h-full w-[10%] bg-red-300 rounded-r-full opacity-50"></div>
+                        <div class="absolute left-[10%] top-1/2 transform -translate-y-1/2 text-xs text-gray-600">하한</div>
+                        <div class="absolute right-[10%] top-1/2 transform -translate-y-1/2 text-xs text-gray-600">상한</div>
+                        <div class="absolute left-1/2 top-1/2 transform -translate-x-1/2 -translate-y-1/2 text-xs font-bold text-gray-700">14.5 (중앙)</div>
+                    </div>
+                    <div class="flex justify-between text-xs text-gray-500 mt-1">
+                        <span>12.32</span>
+                        <span>16.67</span>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- 개별 Tool 상세 분석 -->
+            <div class="card mt-6">
+                <h3 class="font-bold text-gray-800 mb-4">개별 Tool 상세 분석</h3>
+                <div class="flex items-center gap-4 mb-4">
+                    <input type="text" id="trend-tool-id-input" class="input-field" placeholder="Tool ID 입력 (예: PT0020)" style="width: 200px;">
+                    <button class="btn-primary" onclick="loadSingleToolTrend()">
+                        <i class="fas fa-search mr-2"></i>조회
+                    </button>
+                </div>
+                <div id="single-tool-trend-result" class="hidden">
+                    <!-- 결과가 여기에 표시됨 -->
+                </div>
+            </div>
+        </div>
+
+        <!-- ==================== 보고서 ==================== -->
+        <div id="tab-reports" class="tab-content">
+            <div class="mb-6">
+                <h1 class="text-2xl font-bold text-gray-900">보고서</h1>
+                <p class="text-gray-500">점검 현황 통계 및 QMS 양식 출력</p>
+            </div>
+            
+            <div class="grid grid-cols-3 gap-6 mb-6">
+                <div class="stat-card">
+                    <div class="text-sm text-gray-500 mb-1">이번 달 Daily 점검</div>
+                    <div class="text-3xl font-bold text-indigo-600" id="report-daily-count">0건</div>
+                </div>
+                <div class="stat-card">
+                    <div class="text-sm text-gray-500 mb-1">이번 달 Pass율</div>
+                    <div class="text-3xl font-bold text-green-600" id="report-pass-rate">0%</div>
+                </div>
+                <div class="stat-card">
+                    <div class="text-sm text-gray-500 mb-1">Hi-pot 점검</div>
+                    <div class="text-3xl font-bold text-amber-600" id="report-hipot-count">0건</div>
+                </div>
+            </div>
+            
+            <!-- QMS 양식 출력 -->
+            <div class="card">
+                <h3 class="font-bold text-gray-900 mb-4">
+                    <i class="fas fa-file-pdf text-red-500 mr-2"></i>QMS 양식 출력 (DHR용)
+                </h3>
+                
+                <div class="bg-blue-50 border border-blue-200 rounded-lg p-4 mb-6">
+                    <div class="flex items-start gap-3">
+                        <i class="fas fa-info-circle text-blue-500 mt-0.5"></i>
+                        <div class="text-sm text-blue-800">
+                            <p class="font-medium mb-1">QMS 문서 양식으로 출력됩니다</p>
+                            <p>머리글(Document #, Revision, Title)과 바닥글(Confidential notice)이 포함된 공식 양식으로 출력되어 DHR로 활용할 수 있습니다.</p>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="flex items-end gap-4 mb-6">
+                    <div>
+                        <label class="text-xs text-gray-500 block mb-1">시작일</label>
+                        <input type="date" id="report-from" class="input-field" style="width:150px">
+                    </div>
+                    <div>
+                        <label class="text-xs text-gray-500 block mb-1">종료일</label>
+                        <input type="date" id="report-to" class="input-field" style="width:150px">
+                    </div>
+                    <button class="btn-primary" onclick="previewQMSReport()">
+                        <i class="fas fa-eye mr-2"></i>미리보기 및 출력
+                    </button>
+                </div>
+                
+                <div class="grid grid-cols-2 gap-4">
+                    <button class="btn-secondary p-4 text-left" onclick="generateQMSReport('daily-worker')">
+                        <div class="flex items-center gap-3">
+                            <div class="w-10 h-10 bg-blue-100 rounded-lg flex items-center justify-center">
+                                <i class="fas fa-user-check text-blue-600"></i>
+                            </div>
+                            <div>
+                                <div class="font-medium">Daily Check Sheet (작업자 점검)</div>
+                                <div class="text-xs text-gray-500">제전화 / 어스링 / Driver Torque</div>
+                            </div>
+                        </div>
+                    </button>
+                    <button class="btn-secondary p-4 text-left" onclick="generateQMSReport('daily-hipot')">
+                        <div class="flex items-center gap-3">
+                            <div class="w-10 h-10 bg-amber-100 rounded-lg flex items-center justify-center">
+                                <i class="fas fa-bolt text-amber-600"></i>
+                            </div>
+                            <div>
+                                <div class="font-medium">Daily Check Sheet (Safety Tester)</div>
+                                <div class="text-xs text-gray-500">Dummy Hi-pot Test</div>
+                            </div>
+                        </div>
+                    </button>
+                    <button class="btn-secondary p-4 text-left" onclick="generateQMSReport('monthly')">
+                        <div class="flex items-center gap-3">
+                            <div class="w-10 h-10 bg-purple-100 rounded-lg flex items-center justify-center">
+                                <i class="fas fa-calendar-alt text-purple-600"></i>
+                            </div>
+                            <div>
+                                <div class="font-medium">Monthly Check Sheet</div>
+                                <div class="text-xs text-gray-500">Dummy Load / Gloves / Vision Tool</div>
+                            </div>
+                        </div>
+                    </button>
+                    <button class="btn-secondary p-4 text-left" onclick="generateQMSReport('biyearly')">
+                        <div class="flex items-center gap-3">
+                            <div class="w-10 h-10 bg-green-100 rounded-lg flex items-center justify-center">
+                                <i class="fas fa-table text-green-600"></i>
+                            </div>
+                            <div>
+                                <div class="font-medium">Bi-yearly Check Sheet</div>
+                                <div class="text-xs text-gray-500">Table ESD 접지 상태</div>
+                            </div>
+                        </div>
+                    </button>
+                </div>
+            </div>
+        </div>
+        
+        <!-- QMS 보고서 출력용 숨김 영역 -->
+        <div id="qms-print-area" class="hidden">
+        </div>
+
+        <!-- ==================== 설정 ==================== -->
+        <div id="tab-settings" class="tab-content">
+            <div class="mb-6">
+                <h1 class="text-2xl font-bold text-gray-900">설정</h1>
+                <p class="text-gray-500">시스템 설정 및 작업자 관리</p>
+            </div>
+            
+            <!-- 작업자 관리 -->
+            <div class="card">
+                <h3 class="font-bold text-gray-900 mb-4"><i class="fas fa-users text-indigo-500 mr-2"></i>작업자 관리</h3>
+                <table class="w-full mb-6">
+                    <thead>
+                        <tr class="border-b">
+                            <th class="text-left py-3 px-4 text-xs font-semibold text-gray-500 uppercase">이름</th>
+                            <th class="text-left py-3 px-4 text-xs font-semibold text-gray-500 uppercase">사번</th>
+                            <th class="text-center py-3 px-4 text-xs font-semibold text-gray-500 uppercase">관리</th>
+                        </tr>
+                    </thead>
+                    <tbody id="settings-workers-table">
+                    </tbody>
+                </table>
+                <div class="border-t pt-4">
+                    <h4 class="font-medium text-gray-700 mb-3">작업자 추가</h4>
+                    <div class="flex gap-4">
+                        <input type="text" id="new-worker-name" class="input-field" style="width: 200px;" placeholder="이름">
+                        <input type="text" id="new-worker-id" class="input-field" style="width: 150px;" placeholder="사번">
+                        <button class="btn-primary" onclick="addWorker()">
+                            <i class="fas fa-plus mr-2"></i>추가
+                        </button>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Deep How 링크 설정 -->
+            <div class="card">
+                <h3 class="font-bold text-gray-900 mb-4"><i class="fas fa-video text-red-500 mr-2"></i>Deep How 영상 링크 설정</h3>
+                <div class="space-y-4">
+                    <div class="flex items-center gap-4">
+                        <label class="w-40 font-medium text-gray-700">제전화</label>
+                        <input type="text" id="video-esd" class="input-field" placeholder="Deep How 딥링크 URL">
+                    </div>
+                    <div class="flex items-center gap-4">
+                        <label class="w-40 font-medium text-gray-700">어스링</label>
+                        <input type="text" id="video-wrist" class="input-field" placeholder="Deep How 딥링크 URL">
+                    </div>
+                    <div class="flex items-center gap-4">
+                        <label class="w-40 font-medium text-gray-700">전동드라이버</label>
+                        <input type="text" id="video-torque" class="input-field" placeholder="Deep How 딥링크 URL">
+                    </div>
+                    <button class="btn-primary" onclick="saveVideoLinks()">
+                        <i class="fas fa-save mr-2"></i>저장
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <!-- 작업자 수정 모달 -->
+    <div id="edit-modal" class="fixed inset-0 bg-black bg-opacity-50 hidden items-center justify-center z-50">
+        <div class="bg-white rounded-2xl p-6 w-96 shadow-2xl">
+            <h3 class="font-bold text-lg text-gray-900 mb-4">
+                <i class="fas fa-user-edit text-indigo-500 mr-2"></i>작업자 정보 수정
+            </h3>
+            <input type="hidden" id="edit-worker-id">
+            <div class="space-y-4">
+                <div>
+                    <label class="text-sm font-medium text-gray-700 mb-1 block">이름</label>
+                    <input type="text" id="edit-worker-name" class="input-field">
+                </div>
+                <div>
+                    <label class="text-sm font-medium text-gray-700 mb-1 block">사번</label>
+                    <input type="text" id="edit-worker-empid" class="input-field">
+                </div>
+            </div>
+            <div class="flex gap-3 mt-6">
+                <button class="flex-1 py-2 px-4 bg-gray-100 text-gray-700 rounded-lg font-medium hover:bg-gray-200" onclick="closeEditModal()">취소</button>
+                <button class="flex-1 py-2 px-4 bg-indigo-600 text-white rounded-lg font-medium hover:bg-indigo-700" onclick="saveWorkerEdit()">저장</button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // ============ Storage Keys ============
+        const STORAGE_KEYS = {
+            workers: 'pm_workers_v2',
+            dailyWorker: 'pm_daily_worker_v2',
+            dailyHipot: 'pm_daily_hipot_v2',
+            monthly: 'pm_monthly_v2',
+            biyearly: 'pm_biyearly_v2',
+            videos: 'pm_videos_v2'
+        };
+        
+        // 기본 작업자
+        const defaultWorkers = [
+            { id: 1, name: '김은기', empId: 'EMP001' },
+            { id: 2, name: '김성연', empId: 'EMP002' },
+            { id: 3, name: '김환수', empId: 'EMP003' },
+            { id: 4, name: '김동근', empId: 'EMP004' },
+            { id: 5, name: '김희재', empId: 'EMP005' }
+        ];
+        
+        // ============ Data Functions ============
+        function loadData(key) {
+            const data = localStorage.getItem(key);
+            return data ? JSON.parse(data) : [];
+        }
+        
+        function saveData(key, data) {
+            localStorage.setItem(key, JSON.stringify(data));
+        }
+        
+        function loadWorkers() {
+            const data = localStorage.getItem(STORAGE_KEYS.workers);
+            return data ? JSON.parse(data) : defaultWorkers;
+        }
+        
+        function saveWorkers(workers) {
+            localStorage.setItem(STORAGE_KEYS.workers, JSON.stringify(workers));
+        }
+        
+        // ============ Google Sheets API ============
+        const SHEETS_API_URL = 'https://script.google.com/macros/s/AKfycby51VQ0ySQwkscmcQIHuE9jiutWnzp0ImGE2x_XY1eALQi1ELeda8FxcBJZHca3-mkB/exec';
+        
+        async function fetchFromSheets(action, params = {}) {
+            try {
+                const url = new URL(SHEETS_API_URL);
+                url.searchParams.append('action', action);
+                for (const key in params) {
+                    url.searchParams.append(key, params[key]);
+                }
+                
+                const response = await fetch(url.toString());
+                const data = await response.json();
+                return data;
+            } catch (error) {
+                console.error('Google Sheets API 오류:', error);
+                return { success: false, error: error.message };
+            }
+        }
+        
+        async function loadDailyRecordsFromSheets(fromDate, toDate) {
+            const result = await fetchFromSheets('daily_worker', { from: fromDate, to: toDate });
+            if (result.success) {
+                return result.records;
+            }
+            return [];
+        }
+        
+        async function loadToolTrendFromSheets(toolId) {
+            const result = await fetchFromSheets('tool_trend', { tool_id: toolId });
+            if (result.success) {
+                return result.trend;
+            }
+            return null;
+        }
+        
+        async function loadAllToolTrends() {
+            const result = await fetchFromSheets('all_tool_trends');
+            if (result.success) {
+                return result.trends;
+            }
+            return [];
+        }
+        
+        async function loadToolWarnings() {
+            const result = await fetchFromSheets('tool_warnings');
+            if (result.success) {
+                return result.warnings;
+            }
+            return [];
+        }
+        
+        // ============ 트렌드 분석 UI ============
+        async function loadTrendAnalysis() {
+            const tbody = document.getElementById('trend-table-body');
+            tbody.innerHTML = '<tr><td colspan="6" class="py-8 text-center text-gray-400"><i class="fas fa-spinner fa-spin mr-2"></i>데이터를 불러오는 중...</td></tr>';
+            
+            try {
+                const trends = await loadAllToolTrends();
+                
+                if (!trends || trends.length === 0) {
+                    tbody.innerHTML = '<tr><td colspan="6" class="py-8 text-center text-gray-400">등록된 Tool 데이터가 없습니다.</td></tr>';
+                    return;
+                }
+                
+                // 경고 있는 Tool 표시
+                const warnings = trends.filter(t => t.warning);
+                if (warnings.length > 0) {
+                    const banner = document.getElementById('trend-warnings-banner');
+                    const list = document.getElementById('trend-warnings-list');
+                    banner.classList.remove('hidden');
+                    list.innerHTML = warnings.map(w => `
+                        <div class="flex items-center justify-between p-2 bg-white rounded-lg">
+                            <span class="font-medium text-gray-800">${w.tool_id}</span>
+                            <span class="text-amber-600">${w.warning} (평균: ${w.average})</span>
+                            <span class="text-xs text-gray-500">스펙 위치: ${w.position_percent}%</span>
+                        </div>
+                    `).join('');
+                } else {
+                    document.getElementById('trend-warnings-banner').classList.add('hidden');
+                }
+                
+                // 테이블 렌더링
+                tbody.innerHTML = trends.map(t => {
+                    const statusClass = t.warning ? 'badge-yellow' : 'badge-green';
+                    const statusText = t.warning || '정상';
+                    const actionText = t.warning ? '점검/교체 검토' : '-';
+                    
+                    return `
+                        <tr class="border-b hover:bg-gray-50">
+                            <td class="py-3 px-4 font-medium">${t.tool_id}</td>
+                            <td class="py-3 px-4 text-center">${t.sample_count}회</td>
+                            <td class="py-3 px-4 text-center font-mono">${t.average}</td>
+                            <td class="py-3 px-4 text-center">
+                                <div class="flex items-center justify-center gap-2">
+                                    <div class="w-24 h-2 bg-gray-200 rounded-full overflow-hidden">
+                                        <div class="h-full ${t.position_percent > 90 || t.position_percent < 10 ? 'bg-amber-500' : 'bg-green-500'}" style="width: ${t.position_percent}%"></div>
+                                    </div>
+                                    <span class="text-xs text-gray-500">${t.position_percent}%</span>
+                                </div>
+                            </td>
+                            <td class="py-3 px-4 text-center"><span class="badge ${statusClass}">${statusText}</span></td>
+                            <td class="py-3 px-4 text-center text-sm ${t.warning ? 'text-amber-600 font-medium' : 'text-gray-400'}">${actionText}</td>
+                        </tr>
+                    `;
+                }).join('');
+                
+            } catch (error) {
+                console.error('트렌드 분석 오류:', error);
+                tbody.innerHTML = '<tr><td colspan="6" class="py-8 text-center text-red-400">데이터를 불러오는데 실패했습니다.</td></tr>';
+            }
+        }
+        
+        async function loadSingleToolTrend() {
+            const toolId = document.getElementById('trend-tool-id-input').value.trim();
+            if (!toolId) {
+                alert('Tool ID를 입력해주세요.');
+                return;
+            }
+            
+            const resultDiv = document.getElementById('single-tool-trend-result');
+            resultDiv.classList.remove('hidden');
+            resultDiv.innerHTML = '<div class="text-center py-4"><i class="fas fa-spinner fa-spin mr-2"></i>조회 중...</div>';
+            
+            try {
+                const trend = await loadToolTrendFromSheets(toolId);
+                
+                if (!trend) {
+                    resultDiv.innerHTML = `<div class="text-center py-4 text-gray-400">Tool ID "${toolId}"에 대한 데이터가 없습니다.</div>`;
+                    return;
+                }
+                
+                const statusClass = trend.warning ? 'bg-amber-100 text-amber-700' : 'bg-green-100 text-green-700';
+                const statusText = trend.warning || '정상 범위';
+                
+                resultDiv.innerHTML = `
+                    <div class="p-4 border rounded-lg ${trend.warning ? 'border-amber-200 bg-amber-50' : 'border-green-200 bg-green-50'}">
+                        <div class="flex items-center justify-between mb-4">
+                            <h4 class="font-bold text-lg">${trend.tool_id}</h4>
+                            <span class="px-3 py-1 rounded-full text-sm font-medium ${statusClass}">${statusText}</span>
+                        </div>
+                        <div class="grid grid-cols-3 gap-4">
+                            <div class="text-center p-3 bg-white rounded-lg">
+                                <div class="text-2xl font-bold text-gray-800">${trend.average}</div>
+                                <div class="text-xs text-gray-500">평균값 (lbf.in)</div>
+                            </div>
+                            <div class="text-center p-3 bg-white rounded-lg">
+                                <div class="text-2xl font-bold text-gray-800">${trend.sample_count}</div>
+                                <div class="text-xs text-gray-500">측정 횟수</div>
+                            </div>
+                            <div class="text-center p-3 bg-white rounded-lg">
+                                <div class="text-2xl font-bold ${trend.warning ? 'text-amber-600' : 'text-green-600'}">${trend.warning ? '주의' : '양호'}</div>
+                                <div class="text-xs text-gray-500">상태</div>
+                            </div>
+                        </div>
+                        ${trend.warning ? `
+                        <div class="mt-4 p-3 bg-white rounded-lg border border-amber-200">
+                            <div class="flex items-center gap-2 text-amber-700">
+                                <i class="fas fa-exclamation-triangle"></i>
+                                <span class="font-medium">권장 조치</span>
+                            </div>
+                            <p class="text-sm text-gray-600 mt-1">토크 드라이버의 점검 또는 교체를 검토해주세요. 측정값이 스펙 ${trend.warning.includes('상한') ? '상한' : '하한'}에 근접하고 있습니다.</p>
+                        </div>
+                        ` : ''}
+                    </div>
+                `;
+                
+            } catch (error) {
+                console.error('Tool 트렌드 조회 오류:', error);
+                resultDiv.innerHTML = '<div class="text-center py-4 text-red-400">조회에 실패했습니다.</div>';
+            }
+        }
+        
+        // ============ Torque WebSocket ============
+        let torqueWebSocket = null;
+        let torqueConnected = false;
+        let currentMeasurementIndex = 0;
+        
+        function connectTorqueWebSocket() {
+            if (torqueWebSocket && torqueWebSocket.readyState === WebSocket.OPEN) {
+                return;
+            }
+            
+            try {
+                torqueWebSocket = new WebSocket('ws://localhost:8765');
+                
+                torqueWebSocket.onopen = function() {
+                    console.log('Torque Bridge 연결됨');
+                    // 포트 목록 요청
+                    torqueWebSocket.send(JSON.stringify({ action: 'get_ports' }));
+                };
+                
+                torqueWebSocket.onmessage = function(event) {
+                    const data = JSON.parse(event.data);
+                    handleTorqueMessage(data);
+                };
+                
+                torqueWebSocket.onclose = function() {
+                    console.log('Torque Bridge 연결 해제');
+                    updateTorqueConnectionStatus(false);
+                    torqueConnected = false;
+                };
+                
+                torqueWebSocket.onerror = function(error) {
+                    console.log('Torque Bridge 연결 오류:', error);
+                    updateTorqueConnectionStatus(false);
+                };
+            } catch (e) {
+                console.log('WebSocket 연결 실패:', e);
+            }
+        }
+        
+        function handleTorqueMessage(data) {
+            switch(data.type) {
+                case 'welcome':
+                    console.log('Bridge 서버 연결:', data.message);
+                    console.log('Google Sheets 연결:', data.sheets_connected ? '✅' : '❌');
+                    
+                    // 서버 연결 시 Tool 경고 표시
+                    if (data.tool_warnings && data.tool_warnings.length > 0) {
+                        showToolWarningsAlert(data.tool_warnings);
+                    }
+                    break;
+                    
+                case 'ports':
+                    // 포트 목록 업데이트
+                    const select = document.getElementById('torque-port-select');
+                    select.innerHTML = '<option value="">-- 포트 선택 --</option>';
+                    data.ports.forEach(p => {
+                        const option = document.createElement('option');
+                        option.value = p.port;
+                        option.textContent = `${p.port} - ${p.description}`;
+                        select.appendChild(option);
+                    });
+                    break;
+                    
+                case 'connection_status':
+                    torqueConnected = data.connected;
+                    updateTorqueConnectionStatus(data.connected, data.port);
+                    break;
+                    
+                case 'measurement':
+                    // 측정값 수신 - 자동으로 입력란에 채우기
+                    receiveTorqueMeasurement(data);
+                    break;
+                    
+                case 'session_complete':
+                    // 3회 측정 완료
+                    console.log('측정 완료:', data.values, data.result);
+                    break;
+                    
+                case 'cleared':
+                    // 서버에서 초기화 완료 응답 - UI만 초기화 (서버에 다시 보내지 않음)
+                    resetTorqueUI();
+                    break;
+                    
+                case 'trend':
+                    // 트렌드 분석 결과
+                    if (data.data && data.data.warning) {
+                        showTorqueTrendWarning(data.data);
+                    } else {
+                        hideTorqueTrendWarning();
+                    }
+                    break;
+                    
+                case 'save_result':
+                    // 저장 결과
+                    if (data.success) {
+                        console.log(`✅ ${data.record_type} 기록이 Google Sheets에 저장되었습니다.`);
+                        
+                        // 트렌드 경고가 있으면 표시
+                        if (data.trend && data.trend.warning) {
+                            setTimeout(() => {
+                                alert(`⚠️ Tool ${data.trend.tool_id} 경고!\n\n${data.trend.warning}\n평균: ${data.trend.average} lbf.in\n\n${data.trend.recommendation || ''}`);
+                            }, 500);
+                        }
+                    } else {
+                        console.error(`❌ ${data.record_type} 저장 실패`);
+                    }
+                    break;
+                    
+                case 'all_warnings':
+                    // 모든 Tool 경고
+                    if (data.warnings && data.warnings.length > 0) {
+                        showToolWarningsAlert(data.warnings);
+                    }
+                    break;
+                    
+                case 'error':
+                    console.error('Bridge 서버 오류:', data.message);
+                    break;
+            }
+        }
+        
+        function showToolWarningsAlert(warnings) {
+            if (!warnings || warnings.length === 0) return;
+            
+            let message = '⚠️ Tool 점검 필요!\n\n';
+            warnings.forEach(w => {
+                message += `• ${w.tool_id}: ${w.warning} (평균: ${w.avg_value})\n`;
+            });
+            message += '\n해당 Tool의 교체 또는 재조정을 검토해주세요.';
+            
+            // 페이지 로드 후 약간의 딜레이를 주고 알림
+            setTimeout(() => {
+                alert(message);
+            }, 1000);
+        }
+        
+        function updateTorqueConnectionStatus(connected, port) {
+            const dot = document.getElementById('torque-status-dot');
+            const text = document.getElementById('torque-status-text');
+            const btn = document.getElementById('torque-connect-btn');
+            
+            if (connected) {
+                dot.className = 'w-2 h-2 rounded-full bg-green-500 animate-pulse';
+                text.textContent = `연결됨 (${port})`;
+                text.className = 'text-xs text-green-600';
+                btn.innerHTML = '<i class="fas fa-plug mr-1"></i>연결 해제';
+                btn.className = 'bg-red-500 hover:bg-red-600 text-white px-4 py-2 rounded-lg text-sm font-medium';
+            } else {
+                dot.className = 'w-2 h-2 rounded-full bg-gray-400';
+                text.textContent = '연결 안됨';
+                text.className = 'text-xs text-gray-500';
+                btn.innerHTML = '<i class="fas fa-plug mr-1"></i>연결';
+                btn.className = 'btn-primary text-sm';
+            }
+        }
+        
+        function toggleTorqueConnection() {
+            if (torqueConnected) {
+                // 연결 해제
+                if (torqueWebSocket) {
+                    torqueWebSocket.send(JSON.stringify({ action: 'disconnect' }));
+                }
+            } else {
+                // 연결
+                const port = document.getElementById('torque-port-select').value;
+                if (!port) {
+                    alert('시리얼 포트를 선택해주세요.');
+                    return;
+                }
+                if (torqueWebSocket && torqueWebSocket.readyState === WebSocket.OPEN) {
+                    torqueWebSocket.send(JSON.stringify({ action: 'connect', port: port }));
+                }
+            }
+        }
+        
+        function refreshPorts() {
+            if (torqueWebSocket && torqueWebSocket.readyState === WebSocket.OPEN) {
+                torqueWebSocket.send(JSON.stringify({ action: 'get_ports' }));
+            } else {
+                // WebSocket이 연결되지 않은 경우 먼저 연결 시도
+                connectTorqueWebSocket();
+                setTimeout(() => {
+                    if (torqueWebSocket && torqueWebSocket.readyState === WebSocket.OPEN) {
+                        torqueWebSocket.send(JSON.stringify({ action: 'get_ports' }));
+                    } else {
+                        alert('Bridge 서버에 연결할 수 없습니다.\ntorque_bridge_server.py를 먼저 실행해주세요.');
+                    }
+                }, 1000);
+            }
+        }
+        
+        function receiveTorqueMeasurement(data) {
+            const index = data.index;
+            if (index >= 1 && index <= 3) {
+                const input = document.getElementById(`torque-${index}`);
+                const resultSpan = document.getElementById(`torque-result-${index}`);
+                
+                input.value = data.value;
+                input.classList.add('bg-blue-50', 'border-blue-300');
+                
+                // 개별 판정 표시
+                if (data.judgment === 'Pass') {
+                    resultSpan.textContent = 'Pass';
+                    resultSpan.className = 'text-xs text-green-600 font-medium';
+                } else {
+                    resultSpan.textContent = 'Fail';
+                    resultSpan.className = 'text-xs text-red-600 font-medium';
+                }
+                
+                // 종합 판정 업데이트
+                judgeTorque();
+            }
+        }
+        
+        function resetTorqueUI() {
+            // UI만 초기화 (서버에 clear 보내지 않음)
+            for (let i = 1; i <= 3; i++) {
+                const input = document.getElementById(`torque-${i}`);
+                const resultSpan = document.getElementById(`torque-result-${i}`);
+                input.value = '';
+                input.classList.remove('bg-blue-50', 'border-blue-300');
+                if (resultSpan) resultSpan.textContent = '';
+            }
+            document.getElementById('torque-judgment').className = 'auto-judgment pending';
+            document.getElementById('torque-judgment').textContent = '대기';
+            dailyResults.torque = null;
+        }
+        
+        function clearTorqueMeasurement() {
+            // UI 초기화
+            resetTorqueUI();
+            
+            // 서버에도 초기화 전송
+            if (torqueWebSocket && torqueWebSocket.readyState === WebSocket.OPEN) {
+                torqueWebSocket.send(JSON.stringify({ action: 'clear' }));
+            }
+        }
+        
+        function enableManualInput() {
+            // 수동 입력 모드 - readonly 해제
+            for (let i = 1; i <= 3; i++) {
+                document.getElementById(`torque-${i}`).removeAttribute('readonly');
+            }
+            alert('수동 입력 모드가 활성화되었습니다.\n측정값을 직접 입력해주세요.');
+        }
+        
+        function checkToolTrend() {
+            const toolId = document.getElementById('torque-tool-id').value.trim();
+            if (toolId && torqueWebSocket && torqueWebSocket.readyState === WebSocket.OPEN) {
+                torqueWebSocket.send(JSON.stringify({ 
+                    action: 'get_trend', 
+                    tool_id: toolId 
+                }));
+            }
+        }
+        
+        function showTorqueTrendWarning(data) {
+            const container = document.getElementById('torque-trend-warning');
+            const text = document.getElementById('torque-trend-text');
+            container.classList.remove('hidden');
+            text.textContent = `Tool ${data.tool_id}: 최근 ${data.sample_count}회 평균 ${data.average} - ${data.warning}`;
+        }
+        
+        function hideTorqueTrendWarning() {
+            document.getElementById('torque-trend-warning').classList.add('hidden');
+        }
+        
+        // ============ State ============
+        let selectedDailyWorker = null;
+        let dailyResults = { esd: null, wrist: null, torque: null };
+        let hipotResults = { 'pass-sample': null, 'fail-sample': null };
+        let monthlyResults = { 'load-pass': null, 'load-fail': null, vision: null };
+        let esdResults = {};
+        let currentHistoryType = 'daily';
+        
+        // ============ Init ============
+        function init() {
+            const today = new Date();
+            document.getElementById('current-date').textContent = today.toISOString().split('T')[0];
+            document.getElementById('monthly-period').value = today.toISOString().slice(0, 7);
+            
+            const thirtyDaysAgo = new Date(today);
+            thirtyDaysAgo.setDate(today.getDate() - 30);
+            document.getElementById('history-from').value = thirtyDaysAgo.toISOString().split('T')[0];
+            document.getElementById('history-to').value = today.toISOString().split('T')[0];
+            
+            renderDailyWorkerSelection();
+            renderSidebarStatus();
+            renderSettingsWorkers();
+            loadVideoLinksToForm();
+            loadReportStats();
+            
+            // Torque WebSocket 연결 시도
+            setTimeout(() => {
+                connectTorqueWebSocket();
+            }, 500);
+        }
+        
+        // ============ Tab Navigation ============
+        function showTab(tabId) {
+            document.querySelectorAll('.tab-content').forEach(tab => tab.classList.remove('active'));
+            document.querySelectorAll('.nav-item').forEach(nav => nav.classList.remove('active'));
+            
+            document.getElementById('tab-' + tabId).classList.add('active');
+            event.currentTarget.classList.add('active');
+            
+            // 트렌드 분석 탭 열 때 자동 로드
+            if (tabId === 'trend-analysis') {
+                loadTrendAnalysis();
+            }
+        }
+        
+        // ============ Daily Worker Selection ============
+        function renderDailyWorkerSelection() {
+            const workers = loadWorkers();
+            const container = document.getElementById('daily-worker-selection');
+            const todayRecords = loadData(STORAGE_KEYS.dailyWorker).filter(r => r.date === new Date().toISOString().split('T')[0]);
+            
+            container.innerHTML = workers.map(worker => {
+                const completed = todayRecords.some(r => r.workerId === worker.id);
+                return `
+                    <div class="worker-card ${selectedDailyWorker === worker.id ? 'selected' : ''}" onclick="selectDailyWorker(${worker.id})">
+                        <div class="flex items-center gap-2">
+                            <div class="w-8 h-8 bg-indigo-100 rounded-full flex items-center justify-center">
+                                <i class="fas fa-user text-indigo-600 text-sm"></i>
+                            </div>
+                            <div class="flex-1">
+                                <div class="font-medium text-sm">${worker.name}</div>
+                                <div class="text-xs text-gray-500">${worker.empId}</div>
+                            </div>
+                            ${completed ? '<i class="fas fa-check-circle text-green-500"></i>' : '<i class="far fa-circle text-gray-300"></i>'}
+                        </div>
+                    </div>
+                `;
+            }).join('');
+        }
+        
+        function selectDailyWorker(workerId) {
+            selectedDailyWorker = workerId;
+            dailyResults = { esd: null, wrist: null, torque: null };
+            document.querySelectorAll('#tab-daily-check .check-btn').forEach(btn => btn.classList.remove('selected'));
+            document.getElementById('torque-tool-id').value = '';
+            document.getElementById('torque-1').value = '';
+            document.getElementById('torque-2').value = '';
+            document.getElementById('torque-3').value = '';
+            document.getElementById('torque-judgment').className = 'auto-judgment pending';
+            document.getElementById('torque-judgment').textContent = '대기';
+            renderDailyWorkerSelection();
+        }
+        
+        // ============ Daily Results ============
+        function setDailyResult(item, result) {
+            dailyResults[item] = result;
+            const container = document.getElementById(`daily-item-${item}`);
+            container.querySelectorAll('.check-btn').forEach(btn => {
+                btn.classList.remove('selected');
+                if ((btn.classList.contains('pass') && result === 'Pass') ||
+                    (btn.classList.contains('fail') && result === 'Fail')) {
+                    btn.classList.add('selected');
+                }
+            });
+        }
+        
+        function judgeTorque() {
+            const v1 = parseFloat(document.getElementById('torque-1').value);
+            const v2 = parseFloat(document.getElementById('torque-2').value);
+            const v3 = parseFloat(document.getElementById('torque-3').value);
+            
+            const judgment = document.getElementById('torque-judgment');
+            
+            if (isNaN(v1) || isNaN(v2) || isNaN(v3)) {
+                judgment.className = 'auto-judgment pending';
+                judgment.textContent = '대기';
+                dailyResults.torque = null;
+                return;
+            }
+            
+            const min = 12.32, max = 16.67;
+            const allPass = [v1, v2, v3].every(v => v >= min && v <= max);
+            
+            if (allPass) {
+                judgment.className = 'auto-judgment pass';
+                judgment.textContent = 'Pass';
+                dailyResults.torque = 'Pass';
+            } else {
+                judgment.className = 'auto-judgment fail';
+                judgment.textContent = 'Fail';
+                dailyResults.torque = 'Fail';
+            }
+        }
+        
+        function fetchTorqueData() {
+            alert('계측기 서버 연동 후 활성화됩니다.');
+        }
+        
+        function submitDailyWorkerCheck() {
+            if (!selectedDailyWorker) {
+                alert('작업자를 선택해주세요.');
+                return;
+            }
+            if (!dailyResults.esd || !dailyResults.wrist) {
+                alert('제전화와 어스링 점검을 완료해주세요.');
+                return;
+            }
+            
+            // Tool ID 필수 체크
+            const toolId = document.getElementById('torque-tool-id').value.trim();
+            if (!toolId) {
+                alert('Tool ID를 입력해주세요.');
+                document.getElementById('torque-tool-id').focus();
+                return;
+            }
+            
+            if (!dailyResults.torque) {
+                alert('전동드라이버 Torque 측정을 완료해주세요.');
+                return;
+            }
+            
+            const workers = loadWorkers();
+            const worker = workers.find(w => w.id === selectedDailyWorker);
+            const today = new Date().toISOString().split('T')[0];
+            
+            const record = {
+                id: Date.now(),
+                date: today,
+                worker_id: worker.id,
+                worker_name: worker.name,
+                workerId: selectedDailyWorker,
+                workerName: worker.name,
+                esd: dailyResults.esd,
+                esd_result: dailyResults.esd,
+                wrist: dailyResults.wrist,
+                wrist_result: dailyResults.wrist,
+                tool_id: toolId,
+                torque_1: document.getElementById('torque-1').value,
+                torque_2: document.getElementById('torque-2').value,
+                torque_3: document.getElementById('torque-3').value,
+                torque_result: dailyResults.torque,
+                torque: {
+                    toolId: toolId,
+                    values: [
+                        document.getElementById('torque-1').value,
+                        document.getElementById('torque-2').value,
+                        document.getElementById('torque-3').value
+                    ],
+                    result: dailyResults.torque
+                },
+                remarks: document.getElementById('daily-worker-remarks').value,
+                createdAt: new Date().toISOString(),
+                created_at: new Date().toISOString()
+            };
+            
+            // Google Sheets에 저장 (Bridge 서버 통해)
+            if (torqueWebSocket && torqueWebSocket.readyState === WebSocket.OPEN) {
+                torqueWebSocket.send(JSON.stringify({
+                    action: 'save_daily_worker',
+                    record: record
+                }));
+            }
+            
+            // localStorage에도 저장 (백업용)
+            const data = loadData(STORAGE_KEYS.dailyWorker);
+            const existingIdx = data.findIndex(r => r.workerId === selectedDailyWorker && r.date === today);
+            if (existingIdx >= 0) {
+                data[existingIdx] = record;
+            } else {
+                data.push(record);
+            }
+            saveData(STORAGE_KEYS.dailyWorker, data);
+            
+            alert(`${worker.name}님의 Daily 점검이 저장되었습니다.`);
+            
+            // 입력 초기화
+            selectedDailyWorker = null;
+            dailyResults = { esd: null, wrist: null, torque: null };
+            document.querySelectorAll('#tab-daily-check .check-btn').forEach(btn => btn.classList.remove('selected'));
+            document.getElementById('torque-tool-id').value = '';
+            resetTorqueUI();
+            document.getElementById('daily-worker-remarks').value = '';
+            
+            renderDailyWorkerSelection();
+            renderSidebarStatus();
+        }
+        
+        // ============ Hi-pot Test ============
+        function setHipotResult(sample, result) {
+            hipotResults[sample] = result;
+            const container = sample === 'pass-sample' 
+                ? document.querySelector('.bg-green-50') 
+                : document.querySelector('.bg-red-50');
+            container.querySelectorAll('.check-btn').forEach(btn => {
+                btn.classList.remove('selected');
+                if ((btn.classList.contains('pass') && result === 'Pass') ||
+                    (btn.classList.contains('fail') && result === 'Fail')) {
+                    btn.classList.add('selected');
+                }
+            });
+        }
+        
+        function submitHipotCheck() {
+            const inspector = document.getElementById('hipot-inspector').value.trim();
+            if (!inspector) {
+                alert('검사자 ID를 입력해주세요.');
+                return;
+            }
+            if (!hipotResults['pass-sample'] || !hipotResults['fail-sample']) {
+                alert('Pass 시료와 Fail 시료 모두 점검해주세요.');
+                return;
+            }
+            
+            const today = new Date().toISOString().split('T')[0];
+            const record = {
+                id: Date.now(),
+                date: today,
+                inspector: inspector,
+                passSample: hipotResults['pass-sample'],
+                failSample: hipotResults['fail-sample'],
+                pass_sample: hipotResults['pass-sample'],
+                fail_sample: hipotResults['fail-sample'],
+                overallResult: (hipotResults['pass-sample'] === 'Pass' && hipotResults['fail-sample'] === 'Fail') ? 'Pass' : 'Fail',
+                overall_result: (hipotResults['pass-sample'] === 'Pass' && hipotResults['fail-sample'] === 'Fail') ? 'Pass' : 'Fail',
+                remarks: document.getElementById('hipot-remarks').value,
+                createdAt: new Date().toISOString(),
+                created_at: new Date().toISOString()
+            };
+            
+            // Google Sheets에 저장 (Bridge 서버 통해)
+            if (torqueWebSocket && torqueWebSocket.readyState === WebSocket.OPEN) {
+                torqueWebSocket.send(JSON.stringify({
+                    action: 'save_daily_hipot',
+                    record: record
+                }));
+            }
+            
+            // localStorage에도 저장 (백업용)
+            const data = loadData(STORAGE_KEYS.dailyHipot);
+            const existingIdx = data.findIndex(r => r.date === today);
+            if (existingIdx >= 0) {
+                data[existingIdx] = record;
+            } else {
+                data.push(record);
+            }
+            saveData(STORAGE_KEYS.dailyHipot, data);
+            
+            alert('Safety Tester Hi-pot 점검이 저장되었습니다.');
+            
+            hipotResults = { 'pass-sample': null, 'fail-sample': null };
+            document.querySelectorAll('#daily-item-hipot .check-btn').forEach(btn => btn.classList.remove('selected'));
+            document.getElementById('hipot-inspector').value = '';
+            document.getElementById('hipot-remarks').value = '';
+        }
+        
+        // ============ Monthly Check ============
+        function setMonthlyResult(item, result) {
+            monthlyResults[item] = result;
+            
+            let container;
+            if (item === 'load-pass') container = document.querySelector('#monthly-item-load .bg-green-50');
+            else if (item === 'load-fail') container = document.querySelector('#monthly-item-load .bg-red-50');
+            else if (item === 'vision') container = document.getElementById('monthly-item-vision');
+            
+            if (container) {
+                container.querySelectorAll('.check-btn').forEach(btn => {
+                    btn.classList.remove('selected');
+                    if ((btn.classList.contains('pass') && result === 'Pass') ||
+                        (btn.classList.contains('fail') && result === 'Fail')) {
+                        btn.classList.add('selected');
+                    }
+                });
+            }
+        }
+        
+        function checkGlovesExpiry() {
+            const openDate = document.getElementById('gloves-open-date').value;
+            if (!openDate) return;
+            
+            const open = new Date(openDate);
+            const expiry = new Date(open);
+            expiry.setMonth(expiry.getMonth() + 6);
+            
+            document.getElementById('gloves-expiry').value = expiry.toISOString().split('T')[0];
+            
+            const today = new Date();
+            const status = document.getElementById('gloves-status');
+            
+            if (today <= expiry) {
+                status.className = 'auto-judgment pass';
+                status.textContent = '유효';
+            } else {
+                status.className = 'auto-judgment fail';
+                status.textContent = '만료';
+            }
+        }
+        
+        function submitMonthlyCheck() {
+            const inspector = document.getElementById('monthly-inspector').value.trim();
+            const period = document.getElementById('monthly-period').value;
+            
+            if (!inspector) {
+                alert('검사자 ID를 입력해주세요.');
+                return;
+            }
+            
+            const record = {
+                id: Date.now(),
+                period: period,
+                inspector: inspector,
+                loadPassSample: monthlyResults['load-pass'],
+                loadFailSample: monthlyResults['load-fail'],
+                glovesOpenDate: document.getElementById('gloves-open-date').value,
+                glovesExpiry: document.getElementById('gloves-expiry').value,
+                visionResult: monthlyResults['vision'],
+                visionRemarks: document.getElementById('vision-remarks').value,
+                remarks: document.getElementById('monthly-remarks').value,
+                createdAt: new Date().toISOString()
+            };
+            
+            const data = loadData(STORAGE_KEYS.monthly);
+            const existingIdx = data.findIndex(r => r.period === period);
+            if (existingIdx >= 0) {
+                data[existingIdx] = record;
+            } else {
+                data.push(record);
+            }
+            saveData(STORAGE_KEYS.monthly, data);
+            
+            alert(`${period} Monthly 점검이 저장되었습니다.`);
+        }
+        
+        // ============ Bi-yearly Check ============
+        function setEsdResult(item, result) {
+            esdResults[item] = result;
+            const row = document.querySelector(`[data-item="${item}"]`).closest('tr');
+            row.querySelectorAll('.check-btn').forEach(btn => {
+                btn.classList.remove('selected');
+                if ((btn.classList.contains('pass') && result === 'Pass') ||
+                    (btn.classList.contains('fail') && result === 'Fail')) {
+                    btn.classList.add('selected');
+                }
+            });
+        }
+        
+        function submitBiyearlyCheck() {
+            const inspector = document.getElementById('biyearly-inspector').value.trim();
+            const period = document.getElementById('biyearly-period').value;
+            
+            if (!inspector) {
+                alert('검사자 ID를 입력해주세요.');
+                return;
+            }
+            
+            const measurements = {};
+            document.querySelectorAll('.esd-value').forEach(input => {
+                measurements[input.dataset.item] = {
+                    value: input.value,
+                    result: esdResults[input.dataset.item] || null
+                };
+            });
+            
+            const record = {
+                id: Date.now(),
+                period: period,
+                inspector: inspector,
+                measurements: measurements,
+                remarks: document.getElementById('biyearly-remarks').value,
+                createdAt: new Date().toISOString()
+            };
+            
+            const data = loadData(STORAGE_KEYS.biyearly);
+            const existingIdx = data.findIndex(r => r.period === period);
+            if (existingIdx >= 0) {
+                data[existingIdx] = record;
+            } else {
+                data.push(record);
+            }
+            saveData(STORAGE_KEYS.biyearly, data);
+            
+            alert(`${period} Bi-yearly 점검이 저장되었습니다.`);
+        }
+        
+        // ============ Sidebar Status ============
+        function renderSidebarStatus() {
+            const workers = loadWorkers();
+            const today = new Date().toISOString().split('T')[0];
+            const todayRecords = loadData(STORAGE_KEYS.dailyWorker).filter(r => r.date === today);
+            
+            const container = document.getElementById('sidebar-daily-status');
+            container.innerHTML = workers.map(worker => {
+                const completed = todayRecords.some(r => r.workerId === worker.id);
+                return `
+                    <div class="flex items-center gap-2">
+                        <span class="${completed ? 'text-green-400' : 'text-gray-600'}">${completed ? '✅' : '⬜'}</span>
+                        <span class="${completed ? 'text-white' : 'text-gray-500'}">${worker.name}</span>
+                    </div>
+                `;
+            }).join('');
+        }
+        
+        // ============ History ============
+        function setHistoryType(type) {
+            currentHistoryType = type;
+            document.querySelectorAll('.period-tab').forEach(tab => tab.classList.remove('active'));
+            event.currentTarget.classList.add('active');
+        }
+        
+        function loadHistory() {
+            const from = document.getElementById('history-from').value;
+            const to = document.getElementById('history-to').value;
+            
+            let data = [];
+            if (currentHistoryType === 'daily') {
+                const workerData = loadData(STORAGE_KEYS.dailyWorker).filter(r => r.date >= from && r.date <= to);
+                const hipotData = loadData(STORAGE_KEYS.dailyHipot).filter(r => r.date >= from && r.date <= to);
+                
+                workerData.forEach(r => {
+                    data.push({
+                        date: r.date,
+                        type: 'Daily (작업자)',
+                        inspector: r.workerName,
+                        items: `제전화: ${r.esd}, 어스링: ${r.wrist}, Torque: ${r.torque.result}`,
+                        result: (r.esd === 'Pass' && r.wrist === 'Pass' && r.torque.result === 'Pass') ? 'Pass' : 'Fail',
+                        remarks: r.remarks
+                    });
+                });
+                
+                hipotData.forEach(r => {
+                    data.push({
+                        date: r.date,
+                        type: 'Daily (Hi-pot)',
+                        inspector: r.inspector,
+                        items: `Pass시료: ${r.passSample}, Fail시료: ${r.failSample}`,
+                        result: r.overallResult,
+                        remarks: r.remarks
+                    });
+                });
+            }
+            
+            const tbody = document.getElementById('history-table-body');
+            if (data.length === 0) {
+                tbody.innerHTML = '<tr><td colspan="6" class="py-8 text-center text-gray-400">조회 결과가 없습니다</td></tr>';
+            } else {
+                tbody.innerHTML = data.sort((a, b) => b.date.localeCompare(a.date)).map(r => `
+                    <tr class="table-row border-b">
+                        <td class="py-3 px-4">${r.date}</td>
+                        <td class="py-3 px-4"><span class="badge badge-blue">${r.type}</span></td>
+                        <td class="py-3 px-4 font-medium">${r.inspector}</td>
+                        <td class="py-3 px-4 text-sm text-gray-600">${r.items}</td>
+                        <td class="py-3 px-4 text-center"><span class="badge ${r.result === 'Pass' ? 'badge-green' : 'badge-red'}">${r.result}</span></td>
+                        <td class="py-3 px-4 text-gray-500">${r.remarks || '-'}</td>
+                    </tr>
+                `).join('');
+            }
+        }
+        
+        // ============ Reports ============
+        function loadReportStats() {
+            const thisMonth = new Date().toISOString().slice(0, 7);
+            const dailyData = loadData(STORAGE_KEYS.dailyWorker).filter(r => r.date.startsWith(thisMonth));
+            const hipotData = loadData(STORAGE_KEYS.dailyHipot).filter(r => r.date.startsWith(thisMonth));
+            
+            document.getElementById('report-daily-count').textContent = dailyData.length + '건';
+            document.getElementById('report-hipot-count').textContent = hipotData.length + '건';
+            
+            const passCount = dailyData.filter(r => r.esd === 'Pass' && r.wrist === 'Pass' && r.torque.result === 'Pass').length;
+            const passRate = dailyData.length > 0 ? Math.round(passCount / dailyData.length * 100) : 0;
+            document.getElementById('report-pass-rate').textContent = passRate + '%';
+            
+            // 보고서 날짜 기본값 설정
+            const today = new Date();
+            const firstDay = new Date(today.getFullYear(), today.getMonth(), 1);
+            document.getElementById('report-from').value = firstDay.toISOString().split('T')[0];
+            document.getElementById('report-to').value = today.toISOString().split('T')[0];
+        }
+        
+        function generateQMSReport(type) {
+            const fromDate = document.getElementById('report-from').value;
+            const toDate = document.getElementById('report-to').value;
+            
+            if (!fromDate || !toDate) {
+                alert('조회 기간을 선택해주세요.');
+                return;
+            }
+            
+            let reportHTML = '';
+            
+            if (type === 'daily-worker') {
+                reportHTML = generateDailyWorkerReport(fromDate, toDate);
+            } else if (type === 'daily-hipot') {
+                reportHTML = generateDailyHipotReport(fromDate, toDate);
+            } else if (type === 'monthly') {
+                reportHTML = generateMonthlyReport(fromDate, toDate);
+            } else if (type === 'biyearly') {
+                reportHTML = generateBiyearlyReport(fromDate, toDate);
+            }
+            
+            // 새 창에서 출력
+            const printWindow = window.open('', '_blank');
+            printWindow.document.write(reportHTML);
+            printWindow.document.close();
+            printWindow.focus();
+            
+            setTimeout(() => {
+                printWindow.print();
+            }, 500);
+        }
+        
+        function previewQMSReport() {
+            alert('출력할 보고서 유형을 선택해주세요.');
+        }
+        
+        function getQMSHeader(docNumber, revision, title, effectiveDate) {
+            return `
+                <div style="border: 2px solid #000; margin-bottom: 0;">
+                    <table style="width: 100%; border-collapse: collapse;">
+                        <tr>
+                            <td rowspan="3" style="width: 25%; border-right: 1px solid #000; padding: 8px; vertical-align: middle;">
+                                <div style="font-weight: bold; font-size: 14px;">Promega BioSystems</div>
+                                <div style="font-size: 12px; color: #666;">KOREA</div>
+                            </td>
+                            <td rowspan="3" style="width: 15%; border-right: 1px solid #000; padding: 8px; text-align: center; vertical-align: middle;">
+                                <div style="font-size: 11px; color: #666;">Approved</div>
+                                <div style="font-weight: bold; font-size: 13px;">FORM</div>
+                            </td>
+                            <td style="border-bottom: 1px solid #000; padding: 6px 10px;">
+                                <span style="font-size: 11px; color: #666;">Document #:</span>
+                                <span style="font-weight: bold; font-size: 12px; margin-left: 5px;">${docNumber}</span>
+                            </td>
+                            <td style="border-bottom: 1px solid #000; border-left: 1px solid #000; padding: 6px 10px;">
+                                <span style="font-size: 11px; color: #666;">Revision:</span>
+                                <span style="font-weight: bold; font-size: 12px; margin-left: 5px;">${revision}</span>
+                            </td>
+                            <td style="border-bottom: 1px solid #000; border-left: 1px solid #000; padding: 6px 10px;">
+                                <span style="font-size: 11px; color: #666;">Effective Date:</span>
+                                <span style="font-weight: bold; font-size: 12px; margin-left: 5px;">${effectiveDate}</span>
+                            </td>
+                        </tr>
+                        <tr>
+                            <td colspan="3" style="padding: 8px 10px;">
+                                <span style="font-size: 11px; color: #666;">Title:</span>
+                                <span style="font-weight: bold; font-size: 13px; margin-left: 5px;">${title}</span>
+                            </td>
+                        </tr>
+                    </table>
+                </div>
+            `;
+        }
+        
+        function getQMSFooter() {
+            return `
+                <div style="margin-top: 20px; padding-top: 10px; border-top: 1px solid #ccc;">
+                    <div style="font-size: 9px; color: #666; margin-bottom: 5px;">
+                        QP401-7 Rev.1 It is the responsibility of the user to ensure this is the current revision
+                    </div>
+                    <div style="font-size: 9px; color: #666; font-style: italic;">
+                        CONFIDENTIAL. Property of PBK. Do Not Reproduce or Distribute Without the Prior Written Permission of PBK
+                    </div>
+                </div>
+            `;
+        }
+        
+        function generateDailyWorkerReport(fromDate, toDate) {
+            const data = loadData(STORAGE_KEYS.dailyWorker).filter(r => r.date >= fromDate && r.date <= toDate);
+            
+            let tableRows = '';
+            if (data.length === 0) {
+                tableRows = '<tr><td colspan="9" style="text-align: center; padding: 20px; color: #999;">해당 기간에 기록이 없습니다.</td></tr>';
+            } else {
+                data.sort((a, b) => a.date.localeCompare(b.date)).forEach(record => {
+                    const torqueValues = record.torque.values ? record.torque.values.join(' / ') : '-';
+                    const approvalTime = record.createdAt ? formatDateTime(record.createdAt) : '-';
+                    tableRows += `
+                        <tr>
+                            <td style="border: 1px solid #000; padding: 6px; text-align: center;">${formatDate(record.date)}</td>
+                            <td style="border: 1px solid #000; padding: 6px; text-align: center;">${record.workerName}</td>
+                            <td style="border: 1px solid #000; padding: 6px; text-align: center; background: ${record.esd === 'Pass' ? '#d4edda' : '#f8d7da'};">${record.esd}</td>
+                            <td style="border: 1px solid #000; padding: 6px; text-align: center; background: ${record.wrist === 'Pass' ? '#d4edda' : '#f8d7da'};">${record.wrist}</td>
+                            <td style="border: 1px solid #000; padding: 6px; text-align: center;">${record.torque.toolId || '-'}</td>
+                            <td style="border: 1px solid #000; padding: 6px; text-align: center; font-size: 11px;">${torqueValues}</td>
+                            <td style="border: 1px solid #000; padding: 6px; text-align: center; background: ${record.torque.result === 'Pass' ? '#d4edda' : '#f8d7da'};">${record.torque.result}</td>
+                            <td style="border: 1px solid #000; padding: 6px; font-size: 11px;">${record.remarks || ''}</td>
+                            <td style="border: 1px solid #000; padding: 6px; text-align: center; font-size: 10px;">${approvalTime}</td>
+                        </tr>
+                    `;
+                });
+            }
+            
+            return `
+                <!DOCTYPE html>
+                <html>
+                <head>
+                    <meta charset="UTF-8">
+                    <title>Daily Check Sheet (Worker)</title>
+                    <style>
+                        @page { size: A4 landscape; margin: 10mm; }
+                        body { font-family: Arial, sans-serif; font-size: 12px; margin: 0; padding: 15px; }
+                        table { border-collapse: collapse; width: 100%; }
+                        th { background: #f0f0f0; }
+                        @media print {
+                            body { -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+                        }
+                    </style>
+                </head>
+                <body>
+                    ${getQMSHeader('QP707-12', '1', 'Daily Check Sheet_Worker PM Inspection', '1/9/2026')}
+                    
+                    <div style="margin: 20px 0;">
+                        <h2 style="text-align: center; margin-bottom: 15px; font-size: 16px;">Daily Check Sheet (Worker PM Inspection)</h2>
+                        <div style="margin-bottom: 15px; font-size: 11px;">
+                            <span style="margin-right: 30px;"><strong>조회 기간:</strong> ${fromDate} ~ ${toDate}</span>
+                            <span><strong>출력일:</strong> ${new Date().toISOString().split('T')[0]}</span>
+                        </div>
+                        
+                        <table>
+                            <thead>
+                                <tr style="background: #e9ecef;">
+                                    <th style="border: 1px solid #000; padding: 8px; width: 8%;" rowspan="2">Date</th>
+                                    <th style="border: 1px solid #000; padding: 8px; width: 8%;" rowspan="2">Tester</th>
+                                    <th style="border: 1px solid #000; padding: 8px; width: 7%;" rowspan="2">ESD Shoes</th>
+                                    <th style="border: 1px solid #000; padding: 8px; width: 7%;" rowspan="2">Wrist Strap</th>
+                                    <th style="border: 1px solid #000; padding: 8px;" colspan="3">Electronic Driver Torque Check</th>
+                                    <th style="border: 1px solid #000; padding: 8px; width: 15%;" rowspan="2">Remarks</th>
+                                    <th style="border: 1px solid #000; padding: 8px; width: 12%;" rowspan="2">Approval<br><span style="font-size:9px; font-weight:normal;">(Date/Time)</span></th>
+                                </tr>
+                                <tr style="background: #e9ecef;">
+                                    <th style="border: 1px solid #000; padding: 6px; width: 9%; font-size: 11px;">Tool ID</th>
+                                    <th style="border: 1px solid #000; padding: 6px; width: 16%; font-size: 11px;">Torque (3회)<br><span style="font-size:9px; font-weight:normal;">Spec: 12.32~16.67 lbf.in</span></th>
+                                    <th style="border: 1px solid #000; padding: 6px; width: 7%; font-size: 11px;">Result</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                ${tableRows}
+                            </tbody>
+                        </table>
+                        
+                        <div style="margin-top: 15px; font-size: 10px; color: #666;">
+                            * 위 항목들은 ECO 없이 추가되거나 변경될 수 있다.
+                        </div>
+                    </div>
+                    
+                    ${getQMSFooter()}
+                </body>
+                </html>
+            `;
+        }
+        
+        function generateDailyHipotReport(fromDate, toDate) {
+            const data = loadData(STORAGE_KEYS.dailyHipot).filter(r => r.date >= fromDate && r.date <= toDate);
+            
+            let tableRows = '';
+            if (data.length === 0) {
+                tableRows = '<tr><td colspan="7" style="text-align: center; padding: 20px; color: #999;">해당 기간에 기록이 없습니다.</td></tr>';
+            } else {
+                data.sort((a, b) => a.date.localeCompare(b.date)).forEach(record => {
+                    const approvalTime = formatDateTime(record.createdAt);
+                    tableRows += `
+                        <tr>
+                            <td style="border: 1px solid #000; padding: 8px; text-align: center;">${formatDate(record.date)}</td>
+                            <td style="border: 1px solid #000; padding: 8px; text-align: center; background: ${record.passSample === 'Pass' ? '#d4edda' : '#f8d7da'};">${record.passSample}</td>
+                            <td style="border: 1px solid #000; padding: 8px; text-align: center; background: ${record.failSample === 'Fail' ? '#d4edda' : '#f8d7da'};">${record.failSample}</td>
+                            <td style="border: 1px solid #000; padding: 8px; text-align: center; background: ${record.overallResult === 'Pass' ? '#d4edda' : '#f8d7da'};">${record.overallResult}</td>
+                            <td style="border: 1px solid #000; padding: 8px; text-align: center;">${record.inspector}</td>
+                            <td style="border: 1px solid #000; padding: 8px;">${record.remarks || ''}</td>
+                            <td style="border: 1px solid #000; padding: 8px; text-align: center; font-size: 10px;">${approvalTime}</td>
+                        </tr>
+                    `;
+                });
+            }
+            
+            return `
+                <!DOCTYPE html>
+                <html>
+                <head>
+                    <meta charset="UTF-8">
+                    <title>Daily Check Sheet (Safety Tester)</title>
+                    <style>
+                        @page { size: A4; margin: 15mm; }
+                        body { font-family: Arial, sans-serif; font-size: 12px; margin: 0; padding: 15px; }
+                        table { border-collapse: collapse; width: 100%; }
+                        @media print {
+                            body { -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+                        }
+                    </style>
+                </head>
+                <body>
+                    ${getQMSHeader('QP707-9', '2', 'Daily Check Sheet_Safety tester', '1/9/2026')}
+                    
+                    <div style="margin: 20px 0;">
+                        <h2 style="text-align: center; margin-bottom: 15px; font-size: 16px;">Daily Check Sheet (Safety Tester)</h2>
+                        
+                        <div style="margin-bottom: 15px; padding: 10px; background: #f8f9fa; border-radius: 5px;">
+                            <table style="width: auto;">
+                                <tr>
+                                    <td style="padding: 3px 15px 3px 0;"><strong>Model:</strong> GPT-9904</td>
+                                    <td style="padding: 3px 15px 3px 0;"><strong>Test:</strong> Dummy HI-POT Test (DCW 1.5kV)</td>
+                                </tr>
+                                <tr>
+                                    <td style="padding: 3px 15px 3px 0;"><strong>Pass Dummy:</strong> 1490Ω</td>
+                                    <td style="padding: 3px 15px 3px 0;"><strong>Fail Dummy:</strong> 1510Ω</td>
+                                </tr>
+                            </table>
+                        </div>
+                        
+                        <div style="margin-bottom: 10px; font-size: 11px;">
+                            <span style="margin-right: 30px;"><strong>조회 기간:</strong> ${fromDate} ~ ${toDate}</span>
+                            <span><strong>출력일:</strong> ${new Date().toISOString().split('T')[0]}</span>
+                        </div>
+                        
+                        <table>
+                            <thead>
+                                <tr style="background: #e9ecef;">
+                                    <th style="border: 1px solid #000; padding: 10px;">Date (mm/dd/yy)</th>
+                                    <th style="border: 1px solid #000; padding: 10px;">Pass Dummy<br><span style="font-size:10px; font-weight:normal;">(Should be PASS)</span></th>
+                                    <th style="border: 1px solid #000; padding: 10px;">Fail Dummy<br><span style="font-size:10px; font-weight:normal;">(Should be FAIL)</span></th>
+                                    <th style="border: 1px solid #000; padding: 10px;">Overall Result</th>
+                                    <th style="border: 1px solid #000; padding: 10px;">Tester</th>
+                                    <th style="border: 1px solid #000; padding: 10px;">Remarks</th>
+                                    <th style="border: 1px solid #000; padding: 10px;">Approval<br><span style="font-size:9px; font-weight:normal;">(Date/Time)</span></th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                ${tableRows}
+                            </tbody>
+                        </table>
+                        
+                        <div style="margin-top: 15px; font-size: 10px; color: #666;">
+                            * 위 항목들은 ECO 없이 추가되거나 변경될 수 있다.
+                        </div>
+                    </div>
+                    
+                    ${getQMSFooter()}
+                </body>
+                </html>
+            `;
+        }
+        
+        function generateMonthlyReport(fromDate, toDate) {
+            const data = loadData(STORAGE_KEYS.monthly).filter(r => {
+                const recordDate = r.period + '-01';
+                return recordDate >= fromDate && recordDate <= toDate;
+            });
+            
+            let tableRows = '';
+            if (data.length === 0) {
+                tableRows = '<tr><td colspan="8" style="text-align: center; padding: 20px; color: #999;">해당 기간에 기록이 없습니다.</td></tr>';
+            } else {
+                data.sort((a, b) => a.period.localeCompare(b.period)).forEach(record => {
+                    const approvalTime = formatDateTime(record.createdAt);
+                    tableRows += `
+                        <tr>
+                            <td style="border: 1px solid #000; padding: 8px; text-align: center;">${record.period}</td>
+                            <td style="border: 1px solid #000; padding: 8px; text-align: center; background: ${record.loadPassSample === 'Pass' ? '#d4edda' : '#f8d7da'};">${record.loadPassSample || '-'}</td>
+                            <td style="border: 1px solid #000; padding: 8px; text-align: center; background: ${record.loadFailSample === 'Fail' ? '#d4edda' : '#f8d7da'};">${record.loadFailSample || '-'}</td>
+                            <td style="border: 1px solid #000; padding: 8px; text-align: center;">${record.glovesOpenDate || '-'}</td>
+                            <td style="border: 1px solid #000; padding: 8px; text-align: center;">${record.glovesExpiry || '-'}</td>
+                            <td style="border: 1px solid #000; padding: 8px; text-align: center; background: ${record.visionResult === 'Pass' ? '#d4edda' : record.visionResult === 'Fail' ? '#f8d7da' : ''};">${record.visionResult || '-'}</td>
+                            <td style="border: 1px solid #000; padding: 8px; text-align: center;">${record.inspector}</td>
+                            <td style="border: 1px solid #000; padding: 8px; text-align: center; font-size: 10px;">${approvalTime}</td>
+                        </tr>
+                    `;
+                });
+            }
+            
+            return `
+                <!DOCTYPE html>
+                <html>
+                <head>
+                    <meta charset="UTF-8">
+                    <title>Monthly Check Sheet</title>
+                    <style>
+                        @page { size: A4 landscape; margin: 10mm; }
+                        body { font-family: Arial, sans-serif; font-size: 12px; margin: 0; padding: 15px; }
+                        table { border-collapse: collapse; width: 100%; }
+                        @media print {
+                            body { -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+                        }
+                    </style>
+                </head>
+                <body>
+                    ${getQMSHeader('QP707-13', '1', 'Monthly Check Sheet_PM Inspection', '1/9/2026')}
+                    
+                    <div style="margin: 20px 0;">
+                        <h2 style="text-align: center; margin-bottom: 15px; font-size: 16px;">Monthly Check Sheet</h2>
+                        
+                        <div style="margin-bottom: 10px; font-size: 11px;">
+                            <span style="margin-right: 30px;"><strong>조회 기간:</strong> ${fromDate} ~ ${toDate}</span>
+                            <span><strong>출력일:</strong> ${new Date().toISOString().split('T')[0]}</span>
+                        </div>
+                        
+                        <table>
+                            <thead>
+                                <tr style="background: #e9ecef;">
+                                    <th style="border: 1px solid #000; padding: 10px;" rowspan="2">Period</th>
+                                    <th style="border: 1px solid #000; padding: 10px;" colspan="2">Safety Tester Dummy Load</th>
+                                    <th style="border: 1px solid #000; padding: 10px;" colspan="2">Insulating Gloves</th>
+                                    <th style="border: 1px solid #000; padding: 10px;" rowspan="2">Vision Tool</th>
+                                    <th style="border: 1px solid #000; padding: 10px;" rowspan="2">Tester</th>
+                                    <th style="border: 1px solid #000; padding: 10px;" rowspan="2">Approval<br><span style="font-size:9px; font-weight:normal;">(Date/Time)</span></th>
+                                </tr>
+                                <tr style="background: #e9ecef;">
+                                    <th style="border: 1px solid #000; padding: 6px; font-size: 10px;">Pass (1510±3Ω)</th>
+                                    <th style="border: 1px solid #000; padding: 6px; font-size: 10px;">Fail (1490±3Ω)</th>
+                                    <th style="border: 1px solid #000; padding: 6px; font-size: 10px;">Open Date</th>
+                                    <th style="border: 1px solid #000; padding: 6px; font-size: 10px;">Expiry Date</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                ${tableRows}
+                            </tbody>
+                        </table>
+                        
+                        <div style="margin-top: 15px; font-size: 10px; color: #666;">
+                            * 위 항목들은 ECO 없이 추가되거나 변경될 수 있다.
+                        </div>
+                    </div>
+                    
+                    ${getQMSFooter()}
+                </body>
+                </html>
+            `;
+        }
+        
+        function generateBiyearlyReport(fromDate, toDate) {
+            const data = loadData(STORAGE_KEYS.biyearly);
+            
+            let tableRows = '';
+            if (data.length === 0) {
+                tableRows = '<tr><td colspan="9" style="text-align: center; padding: 20px; color: #999;">기록이 없습니다.</td></tr>';
+            } else {
+                data.forEach(record => {
+                    const m = record.measurements || {};
+                    const approvalTime = formatDateTime(record.createdAt);
+                    tableRows += `
+                        <tr>
+                            <td style="border: 1px solid #000; padding: 8px; text-align: center;">${record.period}</td>
+                            <td style="border: 1px solid #000; padding: 8px; text-align: center; background: ${m.equipment?.result === 'Pass' ? '#d4edda' : m.equipment?.result === 'Fail' ? '#f8d7da' : ''}">${m.equipment?.result || '-'}</td>
+                            <td style="border: 1px solid #000; padding: 8px; text-align: center; background: ${m.chair?.result === 'Pass' ? '#d4edda' : m.chair?.result === 'Fail' ? '#f8d7da' : ''}">${m.chair?.result || '-'}</td>
+                            <td style="border: 1px solid #000; padding: 8px; text-align: center; background: ${m.surface?.result === 'Pass' ? '#d4edda' : m.surface?.result === 'Fail' ? '#f8d7da' : ''}">${m.surface?.result || '-'}</td>
+                            <td style="border: 1px solid #000; padding: 8px; text-align: center; background: ${m.wristband?.result === 'Pass' ? '#d4edda' : m.wristband?.result === 'Fail' ? '#f8d7da' : ''}">${m.wristband?.result || '-'}</td>
+                            <td style="border: 1px solid #000; padding: 8px; text-align: center; background: ${m.floor?.result === 'Pass' ? '#d4edda' : m.floor?.result === 'Fail' ? '#f8d7da' : ''}">${m.floor?.result || '-'}</td>
+                            <td style="border: 1px solid #000; padding: 8px; text-align: center; background: ${m.mat?.result === 'Pass' ? '#d4edda' : m.mat?.result === 'Fail' ? '#f8d7da' : ''}">${m.mat?.result || '-'}</td>
+                            <td style="border: 1px solid #000; padding: 8px; text-align: center;">${record.inspector}</td>
+                            <td style="border: 1px solid #000; padding: 8px; text-align: center; font-size: 10px;">${approvalTime}</td>
+                        </tr>
+                    `;
+                });
+            }
+            
+            return `
+                <!DOCTYPE html>
+                <html>
+                <head>
+                    <meta charset="UTF-8">
+                    <title>Bi-yearly Check Sheet</title>
+                    <style>
+                        @page { size: A4 landscape; margin: 10mm; }
+                        body { font-family: Arial, sans-serif; font-size: 12px; margin: 0; padding: 15px; }
+                        table { border-collapse: collapse; width: 100%; }
+                        @media print {
+                            body { -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+                        }
+                    </style>
+                </head>
+                <body>
+                    ${getQMSHeader('QP707-14', '1', 'Bi-yearly Check Sheet_Table ESD', '1/9/2026')}
+                    
+                    <div style="margin: 20px 0;">
+                        <h2 style="text-align: center; margin-bottom: 15px; font-size: 16px;">Bi-yearly Check Sheet (Table ESD)</h2>
+                        
+                        <div style="margin-bottom: 10px; font-size: 11px;">
+                            <span style="margin-right: 30px;"><strong>Equipment & Tool:</strong> DVM (멀티미터)</span>
+                            <span style="margin-right: 30px;"><strong>Check Method:</strong> OK if GND Connected, NG if not connected GND</span>
+                            <span><strong>출력일:</strong> ${new Date().toISOString().split('T')[0]}</span>
+                        </div>
+                        
+                        <table>
+                            <thead>
+                                <tr style="background: #e9ecef;">
+                                    <th style="border: 1px solid #000; padding: 10px;">Period</th>
+                                    <th style="border: 1px solid #000; padding: 10px;">제조설비<br><span style="font-size:9px; font-weight:normal;">≤1000kΩ</span></th>
+                                    <th style="border: 1px solid #000; padding: 10px;">의자/대차<br><span style="font-size:9px; font-weight:normal;">≤1000kΩ</span></th>
+                                    <th style="border: 1px solid #000; padding: 10px;">작업대 표면<br><span style="font-size:9px; font-weight:normal;">1Ω~1GΩ</span></th>
+                                    <th style="border: 1px solid #000; padding: 10px;">손목띠<br><span style="font-size:9px; font-weight:normal;">1MΩ±10%</span></th>
+                                    <th style="border: 1px solid #000; padding: 10px;">바닥 TILE<br><span style="font-size:9px; font-weight:normal;">1MΩ~100GΩ</span></th>
+                                    <th style="border: 1px solid #000; padding: 10px;">도전성 MAT<br><span style="font-size:9px; font-weight:normal;">1MΩ~100MΩ</span></th>
+                                    <th style="border: 1px solid #000; padding: 10px;">Tester</th>
+                                    <th style="border: 1px solid #000; padding: 10px;">Approval<br><span style="font-size:9px; font-weight:normal;">(Date/Time)</span></th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                ${tableRows}
+                            </tbody>
+                        </table>
+                        
+                        <div style="margin-top: 15px; font-size: 10px; color: #666;">
+                            * 위 항목들은 ECO 없이 추가되거나 변경될 수 있다.<br>
+                            * Static Dissipation (정전기 방전) 조건 - 작업 시 발생하는 정전기를 효율적으로 방전시키기 위한 점검
+                        </div>
+                    </div>
+                    
+                    ${getQMSFooter()}
+                </body>
+                </html>
+            `;
+        }
+        
+        function formatDate(dateStr) {
+            const d = new Date(dateStr);
+            const mm = String(d.getMonth() + 1).padStart(2, '0');
+            const dd = String(d.getDate()).padStart(2, '0');
+            const yy = String(d.getFullYear()).slice(-2);
+            return `${mm}/${dd}/${yy}`;
+        }
+        
+        function formatDateTime(isoStr) {
+            if (!isoStr) return '-';
+            const d = new Date(isoStr);
+            const mm = String(d.getMonth() + 1).padStart(2, '0');
+            const dd = String(d.getDate()).padStart(2, '0');
+            const yy = String(d.getFullYear()).slice(-2);
+            const hh = String(d.getHours()).padStart(2, '0');
+            const min = String(d.getMinutes()).padStart(2, '0');
+            return `${mm}/${dd}/${yy} ${hh}:${min}`;
+        }
+        
+        function exportReport(type) {
+            generateQMSReport(type);
+        }
+        
+        // ============ Settings ============
+        function renderSettingsWorkers() {
+            const workers = loadWorkers();
+            const container = document.getElementById('settings-workers-table');
+            
+            container.innerHTML = workers.map(worker => `
+                <tr class="table-row border-b">
+                    <td class="py-3 px-4">
+                        <div class="flex items-center gap-3">
+                            <div class="w-8 h-8 bg-indigo-100 rounded-full flex items-center justify-center">
+                                <i class="fas fa-user text-indigo-600 text-sm"></i>
+                            </div>
+                            <span class="font-medium">${worker.name}</span>
+                        </div>
+                    </td>
+                    <td class="py-3 px-4 text-gray-600">${worker.empId || '-'}</td>
+                    <td class="py-3 px-4 text-center">
+                        <button class="px-3 py-1.5 text-indigo-600 hover:bg-indigo-50 rounded-lg" onclick="openEditModal(${worker.id})">
+                            <i class="fas fa-edit"></i>
+                        </button>
+                        <button class="px-3 py-1.5 text-red-600 hover:bg-red-50 rounded-lg" onclick="deleteWorker(${worker.id})">
+                            <i class="fas fa-trash"></i>
+                        </button>
+                    </td>
+                </tr>
+            `).join('');
+        }
+        
+        function addWorker() {
+            const name = document.getElementById('new-worker-name').value.trim();
+            const empId = document.getElementById('new-worker-id').value.trim();
+            
+            if (!name) {
+                alert('이름을 입력해주세요.');
+                return;
+            }
+            
+            const workers = loadWorkers();
+            const newId = Math.max(...workers.map(w => w.id), 0) + 1;
+            workers.push({ id: newId, name, empId });
+            saveWorkers(workers);
+            
+            document.getElementById('new-worker-name').value = '';
+            document.getElementById('new-worker-id').value = '';
+            
+            renderSettingsWorkers();
+            renderDailyWorkerSelection();
+            renderSidebarStatus();
+            
+            alert(`${name}님이 추가되었습니다.`);
+        }
+        
+        function openEditModal(workerId) {
+            const workers = loadWorkers();
+            const worker = workers.find(w => w.id === workerId);
+            
+            if (worker) {
+                document.getElementById('edit-worker-id').value = workerId;
+                document.getElementById('edit-worker-name').value = worker.name;
+                document.getElementById('edit-worker-empid').value = worker.empId || '';
+                document.getElementById('edit-modal').classList.remove('hidden');
+                document.getElementById('edit-modal').classList.add('flex');
+            }
+        }
+        
+        function closeEditModal() {
+            document.getElementById('edit-modal').classList.add('hidden');
+            document.getElementById('edit-modal').classList.remove('flex');
+        }
+        
+        function saveWorkerEdit() {
+            const workerId = parseInt(document.getElementById('edit-worker-id').value);
+            const newName = document.getElementById('edit-worker-name').value.trim();
+            const newEmpId = document.getElementById('edit-worker-empid').value.trim();
+            
+            if (!newName) {
+                alert('이름을 입력해주세요.');
+                return;
+            }
+            
+            const workers = loadWorkers();
+            const index = workers.findIndex(w => w.id === workerId);
+            
+            if (index >= 0) {
+                workers[index].name = newName;
+                workers[index].empId = newEmpId;
+                saveWorkers(workers);
+                
+                closeEditModal();
+                renderSettingsWorkers();
+                renderDailyWorkerSelection();
+                renderSidebarStatus();
+                
+                alert('수정 완료');
+            }
+        }
+        
+        function deleteWorker(workerId) {
+            const workers = loadWorkers();
+            const worker = workers.find(w => w.id === workerId);
+            
+            if (confirm(`"${worker.name}" 작업자를 삭제하시겠습니까?`)) {
+                const newWorkers = workers.filter(w => w.id !== workerId);
+                saveWorkers(newWorkers);
+                
+                renderSettingsWorkers();
+                renderDailyWorkerSelection();
+                renderSidebarStatus();
+                
+                alert('삭제 완료');
+            }
+        }
+        
+        // ============ Video Links ============
+        function loadVideoLinksToForm() {
+            const links = JSON.parse(localStorage.getItem(STORAGE_KEYS.videos) || '{}');
+            document.getElementById('video-esd').value = links.esd || '';
+            document.getElementById('video-wrist').value = links.wrist || '';
+            document.getElementById('video-torque').value = links.torque || '';
+        }
+        
+        function saveVideoLinks() {
+            const links = {
+                esd: document.getElementById('video-esd').value.trim(),
+                wrist: document.getElementById('video-wrist').value.trim(),
+                torque: document.getElementById('video-torque').value.trim()
+            };
+            localStorage.setItem(STORAGE_KEYS.videos, JSON.stringify(links));
+            updateVideoButtons();
+            alert('영상 링크가 저장되었습니다.');
+        }
+        
+        function updateVideoButtons() {
+            const links = JSON.parse(localStorage.getItem(STORAGE_KEYS.videos) || '{}');
+            // 버튼 상태 업데이트 로직
+        }
+        
+        function openVideo(type) {
+            const links = JSON.parse(localStorage.getItem(STORAGE_KEYS.videos) || '{}');
+            if (links[type]) {
+                window.open(links[type], '_blank');
+            } else {
+                alert('등록된 영상이 없습니다. 설정에서 Deep How 링크를 등록해주세요.');
+            }
+        }
+        
+        // Initialize
+        document.addEventListener('DOMContentLoaded', init);
+    </script>
+</body>
+</html>

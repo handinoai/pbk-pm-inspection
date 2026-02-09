@@ -3,6 +3,9 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
+    <meta http-equiv="Pragma" content="no-cache">
+    <meta http-equiv="Expires" content="0">
     <title>PBK PM Inspection System V2</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
@@ -1160,6 +1163,30 @@
             videos: 'pm_videos_v2'
         };
         
+        // ============ 로컬 날짜/시간 함수 (한국 시간 기준) ============
+        function getLocalDateString() {
+            const now = new Date();
+            return formatDateToLocal(now);
+        }
+        
+        function formatDateToLocal(date) {
+            const year = date.getFullYear();
+            const month = String(date.getMonth() + 1).padStart(2, '0');
+            const day = String(date.getDate()).padStart(2, '0');
+            return `${year}-${month}-${day}`;
+        }
+        
+        function getLocalDateTimeString() {
+            const now = new Date();
+            const year = now.getFullYear();
+            const month = String(now.getMonth() + 1).padStart(2, '0');
+            const day = String(now.getDate()).padStart(2, '0');
+            const hours = String(now.getHours()).padStart(2, '0');
+            const minutes = String(now.getMinutes()).padStart(2, '0');
+            const seconds = String(now.getSeconds()).padStart(2, '0');
+            return `${year}-${month}-${day}T${hours}:${minutes}:${seconds}`;
+        }
+        
         // 기본 작업자
         const defaultWorkers = [
             { id: 1, name: '김은기', empId: 'EMP001' },
@@ -1668,13 +1695,13 @@
         // ============ Init ============
         function init() {
             const today = new Date();
-            document.getElementById('current-date').textContent = today.toISOString().split('T')[0];
+            document.getElementById('current-date').textContent = getLocalDateString();
             document.getElementById('monthly-period').value = today.toISOString().slice(0, 7);
             
             const thirtyDaysAgo = new Date(today);
             thirtyDaysAgo.setDate(today.getDate() - 30);
-            document.getElementById('history-from').value = thirtyDaysAgo.toISOString().split('T')[0];
-            document.getElementById('history-to').value = today.toISOString().split('T')[0];
+            document.getElementById('history-from').value = formatDateToLocal(thirtyDaysAgo);
+            document.getElementById('history-to').value = getLocalDateString();
             
             renderDailyWorkerSelection();
             renderSidebarStatus();
@@ -1706,7 +1733,7 @@
         function renderDailyWorkerSelection() {
             const workers = loadWorkers();
             const container = document.getElementById('daily-worker-selection');
-            const todayRecords = loadData(STORAGE_KEYS.dailyWorker).filter(r => r.date === new Date().toISOString().split('T')[0]);
+            const todayRecords = loadData(STORAGE_KEYS.dailyWorker).filter(r => r.date === getLocalDateString());
             
             container.innerHTML = workers.map(worker => {
                 const completed = todayRecords.some(r => r.workerId === worker.id);
@@ -1810,7 +1837,7 @@
             
             const workers = loadWorkers();
             const worker = workers.find(w => w.id === selectedDailyWorker);
-            const today = new Date().toISOString().split('T')[0];
+            const today = getLocalDateString();
             
             const record = {
                 id: Date.now(),
@@ -1838,8 +1865,8 @@
                     result: dailyResults.torque
                 },
                 remarks: document.getElementById('daily-worker-remarks').value,
-                createdAt: new Date().toISOString(),
-                created_at: new Date().toISOString()
+                createdAt: getLocalDateTimeString(),
+                created_at: getLocalDateTimeString()
             };
             
             // Google Sheets에 저장 (Bridge 서버 통해)
@@ -1900,7 +1927,7 @@
                 return;
             }
             
-            const today = new Date().toISOString().split('T')[0];
+            const today = getLocalDateString();
             const record = {
                 id: Date.now(),
                 date: today,
@@ -1912,8 +1939,8 @@
                 overallResult: (hipotResults['pass-sample'] === 'Pass' && hipotResults['fail-sample'] === 'Fail') ? 'Pass' : 'Fail',
                 overall_result: (hipotResults['pass-sample'] === 'Pass' && hipotResults['fail-sample'] === 'Fail') ? 'Pass' : 'Fail',
                 remarks: document.getElementById('hipot-remarks').value,
-                createdAt: new Date().toISOString(),
-                created_at: new Date().toISOString()
+                createdAt: getLocalDateTimeString(),
+                created_at: getLocalDateTimeString()
             };
             
             // Google Sheets에 저장 (Bridge 서버 통해)
@@ -1970,7 +1997,7 @@
             const expiry = new Date(open);
             expiry.setMonth(expiry.getMonth() + 6);
             
-            document.getElementById('gloves-expiry').value = expiry.toISOString().split('T')[0];
+            document.getElementById('gloves-expiry').value = formatDateToLocal(expiry);
             
             const today = new Date();
             const status = document.getElementById('gloves-status');
@@ -2073,7 +2100,7 @@
         // ============ Sidebar Status ============
         function renderSidebarStatus() {
             const workers = loadWorkers();
-            const today = new Date().toISOString().split('T')[0];
+            const today = getLocalDateString();
             const todayRecords = loadData(STORAGE_KEYS.dailyWorker).filter(r => r.date === today);
             
             const container = document.getElementById('sidebar-daily-status');
@@ -2160,8 +2187,8 @@
             // 보고서 날짜 기본값 설정
             const today = new Date();
             const firstDay = new Date(today.getFullYear(), today.getMonth(), 1);
-            document.getElementById('report-from').value = firstDay.toISOString().split('T')[0];
-            document.getElementById('report-to').value = today.toISOString().split('T')[0];
+            document.getElementById('report-from').value = formatDateToLocal(firstDay);
+            document.getElementById('report-to').value = getLocalDateString();
         }
         
         function generateQMSReport(type) {
@@ -2299,7 +2326,7 @@
                         <h2 style="text-align: center; margin-bottom: 15px; font-size: 16px;">Daily Check Sheet (Worker PM Inspection)</h2>
                         <div style="margin-bottom: 15px; font-size: 11px;">
                             <span style="margin-right: 30px;"><strong>조회 기간:</strong> ${fromDate} ~ ${toDate}</span>
-                            <span><strong>출력일:</strong> ${new Date().toISOString().split('T')[0]}</span>
+                            <span><strong>출력일:</strong> ${getLocalDateString()}</span>
                         </div>
                         
                         <table>
@@ -2394,7 +2421,7 @@
                         
                         <div style="margin-bottom: 10px; font-size: 11px;">
                             <span style="margin-right: 30px;"><strong>조회 기간:</strong> ${fromDate} ~ ${toDate}</span>
-                            <span><strong>출력일:</strong> ${new Date().toISOString().split('T')[0]}</span>
+                            <span><strong>출력일:</strong> ${getLocalDateString()}</span>
                         </div>
                         
                         <table>
@@ -2475,7 +2502,7 @@
                         
                         <div style="margin-bottom: 10px; font-size: 11px;">
                             <span style="margin-right: 30px;"><strong>조회 기간:</strong> ${fromDate} ~ ${toDate}</span>
-                            <span><strong>출력일:</strong> ${new Date().toISOString().split('T')[0]}</span>
+                            <span><strong>출력일:</strong> ${getLocalDateString()}</span>
                         </div>
                         
                         <table>
@@ -2561,7 +2588,7 @@
                         <div style="margin-bottom: 10px; font-size: 11px;">
                             <span style="margin-right: 30px;"><strong>Equipment & Tool:</strong> DVM (멀티미터)</span>
                             <span style="margin-right: 30px;"><strong>Check Method:</strong> OK if GND Connected, NG if not connected GND</span>
-                            <span><strong>출력일:</strong> ${new Date().toISOString().split('T')[0]}</span>
+                            <span><strong>출력일:</strong> ${getLocalDateString()}</span>
                         </div>
                         
                         <table>

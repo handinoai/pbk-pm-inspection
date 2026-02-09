@@ -1246,14 +1246,17 @@
             tbody.innerHTML = '<tr><td colspan="6" class="py-8 text-center text-gray-400"><i class="fas fa-spinner fa-spin mr-2"></i>데이터를 불러오는 중...</td></tr>';
             
             try {
+                console.log('트렌드 분석 데이터 로드 시작...');
                 const trends = await loadAllToolTrends();
+                console.log('API 응답:', trends);
                 
                 if (!trends || trends.length === 0) {
                     tbody.innerHTML = '<tr><td colspan="6" class="py-8 text-center text-gray-400">등록된 Tool 데이터가 없습니다.</td></tr>';
+                    document.getElementById('trend-warnings-banner').classList.add('hidden');
                     return;
                 }
                 
-                // 경고 있는 Tool 표시
+                // 경고 있는 Tool 표시 (테이블 위 배너에만, 팝업 없음)
                 const warnings = trends.filter(t => t.warning);
                 if (warnings.length > 0) {
                     const banner = document.getElementById('trend-warnings-banner');
@@ -1279,12 +1282,12 @@
                     return `
                         <tr class="border-b hover:bg-gray-50">
                             <td class="py-3 px-4 font-medium">${t.tool_id}</td>
-                            <td class="py-3 px-4 text-center">${t.sample_count}회</td>
+                            <td class="py-3 px-4 text-center">${t.sample_count}일</td>
                             <td class="py-3 px-4 text-center font-mono">${t.average}</td>
                             <td class="py-3 px-4 text-center">
                                 <div class="flex items-center justify-center gap-2">
                                     <div class="w-24 h-2 bg-gray-200 rounded-full overflow-hidden">
-                                        <div class="h-full ${t.position_percent > 90 || t.position_percent < 10 ? 'bg-amber-500' : 'bg-green-500'}" style="width: ${t.position_percent}%"></div>
+                                        <div class="h-full ${t.position_percent > 85 || t.position_percent < 15 ? 'bg-amber-500' : 'bg-green-500'}" style="width: ${t.position_percent}%"></div>
                                     </div>
                                     <span class="text-xs text-gray-500">${t.position_percent}%</span>
                                 </div>
@@ -1405,11 +1408,7 @@
                 case 'welcome':
                     console.log('Bridge 서버 연결:', data.message);
                     console.log('Google Sheets 연결:', data.sheets_connected ? '✅' : '❌');
-                    
-                    // 서버 연결 시 Tool 경고 표시
-                    if (data.tool_warnings && data.tool_warnings.length > 0) {
-                        showToolWarningsAlert(data.tool_warnings);
-                    }
+                    // 페이지 로드 시 팝업 표시하지 않음 - 트렌드 탭에서만 확인
                     break;
                     
                 case 'ports':

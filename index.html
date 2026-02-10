@@ -975,16 +975,16 @@
             
             <div class="grid grid-cols-3 gap-6 mb-6">
                 <div class="stat-card">
-                    <div class="text-sm text-gray-500 mb-1">이번 달 Daily 점검</div>
-                    <div class="text-3xl font-bold text-indigo-600" id="report-daily-count">0건</div>
+                    <div class="text-sm text-gray-500 mb-1">Daily 점검 Pass율</div>
+                    <div class="text-3xl font-bold text-indigo-600" id="report-daily-pass-rate">-</div>
                 </div>
                 <div class="stat-card">
-                    <div class="text-sm text-gray-500 mb-1">이번 달 Pass율</div>
-                    <div class="text-3xl font-bold text-green-600" id="report-pass-rate">0%</div>
+                    <div class="text-sm text-gray-500 mb-1">Monthly 점검 Pass율</div>
+                    <div class="text-3xl font-bold text-green-600" id="report-monthly-pass-rate">-</div>
                 </div>
                 <div class="stat-card">
-                    <div class="text-sm text-gray-500 mb-1">Hi-pot 점검</div>
-                    <div class="text-3xl font-bold text-amber-600" id="report-hipot-count">0건</div>
+                    <div class="text-sm text-gray-500 mb-1">Bi-yearly 점검 Pass율</div>
+                    <div class="text-3xl font-bold text-amber-600" id="report-biyearly-pass-rate">-</div>
                 </div>
             </div>
             
@@ -993,16 +993,6 @@
                 <h3 class="font-bold text-gray-900 mb-4">
                     <i class="fas fa-file-pdf text-red-500 mr-2"></i>QMS 양식 출력 (DHR용)
                 </h3>
-                
-                <div class="bg-blue-50 border border-blue-200 rounded-lg p-4 mb-6">
-                    <div class="flex items-start gap-3">
-                        <i class="fas fa-info-circle text-blue-500 mt-0.5"></i>
-                        <div class="text-sm text-blue-800">
-                            <p class="font-medium mb-1">QMS 문서 양식으로 출력됩니다</p>
-                            <p>머리글(Document #, Revision, Title)과 바닥글(Confidential notice)이 포함된 공식 양식으로 출력되어 DHR로 활용할 수 있습니다.</p>
-                        </div>
-                    </div>
-                </div>
                 
                 <div class="flex items-end gap-4 mb-6">
                     <div>
@@ -2173,16 +2163,23 @@
         
         // ============ Reports ============
         function loadReportStats() {
-            const thisMonth = new Date().toISOString().slice(0, 7);
-            const dailyData = loadData(STORAGE_KEYS.dailyWorker).filter(r => r.date.startsWith(thisMonth));
-            const hipotData = loadData(STORAGE_KEYS.dailyHipot).filter(r => r.date.startsWith(thisMonth));
+            // Daily Pass율 계산
+            const dailyData = loadData(STORAGE_KEYS.dailyWorker);
+            const dailyPassCount = dailyData.filter(r => r.esd === 'Pass' && r.wrist === 'Pass' && (r.torque?.result === 'Pass' || r.torque_result === 'Pass')).length;
+            const dailyPassRate = dailyData.length > 0 ? Math.round(dailyPassCount / dailyData.length * 100) : 0;
+            document.getElementById('report-daily-pass-rate').textContent = dailyData.length > 0 ? dailyPassRate + '%' : '-';
             
-            document.getElementById('report-daily-count').textContent = dailyData.length + '건';
-            document.getElementById('report-hipot-count').textContent = hipotData.length + '건';
+            // Monthly Pass율 계산
+            const monthlyData = loadData(STORAGE_KEYS.monthly);
+            const monthlyPassCount = monthlyData.filter(r => r.overallResult === 'Pass').length;
+            const monthlyPassRate = monthlyData.length > 0 ? Math.round(monthlyPassCount / monthlyData.length * 100) : 0;
+            document.getElementById('report-monthly-pass-rate').textContent = monthlyData.length > 0 ? monthlyPassRate + '%' : '-';
             
-            const passCount = dailyData.filter(r => r.esd === 'Pass' && r.wrist === 'Pass' && r.torque.result === 'Pass').length;
-            const passRate = dailyData.length > 0 ? Math.round(passCount / dailyData.length * 100) : 0;
-            document.getElementById('report-pass-rate').textContent = passRate + '%';
+            // Bi-yearly Pass율 계산
+            const biyearlyData = loadData(STORAGE_KEYS.biyearly);
+            const biyearlyPassCount = biyearlyData.filter(r => r.overallResult === 'Pass').length;
+            const biyearlyPassRate = biyearlyData.length > 0 ? Math.round(biyearlyPassCount / biyearlyData.length * 100) : 0;
+            document.getElementById('report-biyearly-pass-rate').textContent = biyearlyData.length > 0 ? biyearlyPassRate + '%' : '-';
             
             // 보고서 날짜 기본값 설정
             const today = new Date();

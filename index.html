@@ -2217,17 +2217,46 @@
                 return;
             }
             
-            // Dummy Load 측정값 가져오기
+            // ============ 유효성 검사 ============
+            const missingItems = [];
+            
+            // 1. Dummy Load Test
             const loadPassValue = document.getElementById('load-pass-value').value;
             const loadFailValue = document.getElementById('load-fail-value').value;
+            if (!loadPassValue) missingItems.push('Dummy Load - Pass 시료 측정값');
+            if (!loadFailValue) missingItems.push('Dummy Load - Fail 시료 측정값');
             
+            // 2. Insulating Gloves
+            if (!document.getElementById('gloves-open-date').value) {
+                missingItems.push('Insulating Gloves - 개봉일');
+            }
+            
+            // 3. Machine Vision Setting Fixture (3대)
+            for (let n = 1; n <= 3; n++) {
+                if (!mvFixtureResults[n][1] || !mvFixtureResults[n][2]) {
+                    missingItems.push(`M/V Setting Fixture #${n} - 점검 항목`);
+                }
+            }
+            
+            // 4. Machine Vision Test Tray
+            if (!mvTrayResults[1] || !mvTrayResults[2]) {
+                missingItems.push('M/V Test Tray - 점검 항목');
+            }
+            
+            // 누락 항목이 있으면 알림
+            if (missingItems.length > 0) {
+                const message = '다음 항목이 누락되었습니다:\n\n• ' + missingItems.join('\n• ') + '\n\n모든 항목을 입력해주세요.';
+                alert(message);
+                return;
+            }
+            
+            // ============ 데이터 저장 ============
             // Machine Vision Fixture 결과 (3대)
             const mvFixtures = [1, 2, 3].map(n => ({
                 serial: document.getElementById(`mv-fixture-serial-${n}`).value.trim(),
                 check1: mvFixtureResults[n][1],
                 check2: mvFixtureResults[n][2],
-                result: (mvFixtureResults[n][1] === 'OK' && mvFixtureResults[n][2] === 'OK') ? 'OK' : 
-                        (mvFixtureResults[n][1] && mvFixtureResults[n][2]) ? 'NG' : null
+                result: (mvFixtureResults[n][1] === 'OK' && mvFixtureResults[n][2] === 'OK') ? 'OK' : 'NG'
             }));
             
             const mvTraySerial = document.getElementById('mv-tray-serial').value.trim();
@@ -3210,17 +3239,18 @@
         let mvTrayResults = { 1: null, 2: null };
         function setMVTrayCheck(item, result) {
             mvTrayResults[item] = result;
-            const buttons = document.querySelectorAll(`#monthly-item-mv-tray .check-btn`);
-            buttons.forEach(btn => {
-                const btnItem = parseInt(btn.closest('.flex').querySelector('span').textContent.charAt(0));
-                if (btnItem === item) {
+            
+            // 해당 행의 버튼 상태 업데이트
+            const rows = document.querySelectorAll('#monthly-item-mv-tray .space-y-3 > div');
+            if (rows[item - 1]) {
+                rows[item - 1].querySelectorAll('.check-btn').forEach(btn => {
                     btn.classList.remove('selected');
                     if ((result === 'OK' && btn.classList.contains('pass')) || 
                         (result === 'NG' && btn.classList.contains('fail'))) {
                         btn.classList.add('selected');
                     }
-                }
-            });
+                });
+            }
             
             // 전체 결과 업데이트
             if (mvTrayResults[1] && mvTrayResults[2]) {

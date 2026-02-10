@@ -389,7 +389,7 @@
                             <div class="flex items-center gap-3 mb-2">
                                 <span class="w-6 h-6 bg-indigo-100 text-indigo-600 rounded-full flex items-center justify-center text-sm font-bold">1</span>
                                 <h4 class="font-bold text-gray-900">제전화 (ESD Shoes)</h4>
-                                <div class="video-btn inactive" onclick="openVideo('esd')" title="측정 방법 영상">
+                                <div class="video-btn inactive" id="video-btn-esd" onclick="openVideo('esd')" title="측정 방법 영상">
                                     <i class="fas fa-play"></i>
                                 </div>
                             </div>
@@ -418,7 +418,7 @@
                             <div class="flex items-center gap-3 mb-2">
                                 <span class="w-6 h-6 bg-indigo-100 text-indigo-600 rounded-full flex items-center justify-center text-sm font-bold">2</span>
                                 <h4 class="font-bold text-gray-900">어스링 (Wrist Strap)</h4>
-                                <div class="video-btn inactive" onclick="openVideo('wrist')" title="측정 방법 영상">
+                                <div class="video-btn inactive" id="video-btn-wrist" onclick="openVideo('wrist')" title="측정 방법 영상">
                                     <i class="fas fa-play"></i>
                                 </div>
                             </div>
@@ -445,7 +445,7 @@
                     <div class="flex items-center gap-3 mb-3">
                         <span class="w-6 h-6 bg-indigo-100 text-indigo-600 rounded-full flex items-center justify-center text-sm font-bold">3</span>
                         <h4 class="font-bold text-gray-900">전동드라이버 Torque Check</h4>
-                        <div class="video-btn inactive" onclick="openVideo('torque')" title="측정 방법 영상">
+                        <div class="video-btn inactive" id="video-btn-torque" onclick="openVideo('torque')" title="측정 방법 영상">
                             <i class="fas fa-play"></i>
                         </div>
                         <!-- 계측기 연결 상태 -->
@@ -537,9 +537,9 @@
                         <h3 class="font-bold text-gray-900">
                             <i class="fas fa-bolt text-amber-500 mr-2"></i>Safety Tester Dummy Hi-pot Test
                         </h3>
-                        <a href="#" id="video-link-hipot" target="_blank" class="text-red-500 hover:text-red-700" title="검사 방법 영상 보기" style="display:none;">
-                            <i class="fas fa-play-circle text-xl"></i>
-                        </a>
+                        <div class="video-btn inactive" id="video-btn-hipot" onclick="openVideo('hipot')" title="검사 방법 영상">
+                            <i class="fas fa-play"></i>
+                        </div>
                     </div>
                     <div class="flex items-center gap-3">
                         <div id="hipot-today-status" class="hidden">
@@ -641,9 +641,9 @@
                         <span class="w-6 h-6 bg-purple-100 text-purple-600 rounded-full flex items-center justify-center text-sm font-bold">1</span>
                         <h4 class="font-bold text-gray-900">Safety Tester Dummy Load Test</h4>
                         <span class="badge badge-purple">GPT-9904</span>
-                        <a href="#" id="video-link-load" target="_blank" class="text-red-500 hover:text-red-700 ml-2" title="검사 방법 영상 보기" style="display:none;">
-                            <i class="fas fa-play-circle text-lg"></i>
-                        </a>
+                        <div class="video-btn inactive" id="video-btn-load" onclick="openVideo('load')" title="검사 방법 영상">
+                            <i class="fas fa-play"></i>
+                        </div>
                     </div>
                     <div class="ml-9">
                         <div class="text-sm text-gray-600 mb-4">DMM으로 더미로드 저항값 측정 (Spec 범위 내 확인)</div>
@@ -709,9 +709,9 @@
                     <div class="flex items-center gap-3 mb-4">
                         <span class="w-6 h-6 bg-purple-100 text-purple-600 rounded-full flex items-center justify-center text-sm font-bold">2</span>
                         <h4 class="font-bold text-gray-900">Insulating Gloves (절연장갑)</h4>
-                        <a href="#" id="video-link-gloves" target="_blank" class="text-red-500 hover:text-red-700 ml-2" title="검사 방법 영상 보기" style="display:none;">
-                            <i class="fas fa-play-circle text-lg"></i>
-                        </a>
+                        <div class="video-btn inactive" id="video-btn-gloves" onclick="openVideo('gloves')" title="검사 방법 영상">
+                            <i class="fas fa-play"></i>
+                        </div>
                     </div>
                     <div class="ml-9">
                         <div class="text-sm text-gray-600 mb-4">유효기간 확인 (개봉일로부터 6개월 이내)</div>
@@ -739,9 +739,9 @@
                     <div class="flex items-center gap-3 mb-4">
                         <span class="w-6 h-6 bg-purple-100 text-purple-600 rounded-full flex items-center justify-center text-sm font-bold">3</span>
                         <h4 class="font-bold text-gray-900">Machine Vision Setting Fixture</h4>
-                        <a href="#" id="video-link-mv-fixture" target="_blank" class="text-red-500 hover:text-red-700 ml-2" title="검사 방법 영상 보기" style="display:none;">
-                            <i class="fas fa-play-circle text-lg"></i>
-                        </a>
+                        <div class="video-btn inactive" id="video-btn-mv-fixture" onclick="openVideo('mvFixture')" title="검사 방법 영상">
+                            <i class="fas fa-play"></i>
+                        </div>
                     </div>
                     <div class="ml-9">
                         <div class="text-sm text-gray-600 mb-4">외관 점검 - 손상 및 유실 여부 확인</div>
@@ -776,9 +776,9 @@
                     <div class="flex items-center gap-3 mb-4">
                         <span class="w-6 h-6 bg-purple-100 text-purple-600 rounded-full flex items-center justify-center text-sm font-bold">4</span>
                         <h4 class="font-bold text-gray-900">Machine Vision Test Tray</h4>
-                        <a href="#" id="video-link-mv-tray" target="_blank" class="text-red-500 hover:text-red-700 ml-2" title="검사 방법 영상 보기" style="display:none;">
-                            <i class="fas fa-play-circle text-lg"></i>
-                        </a>
+                        <div class="video-btn inactive" id="video-btn-mv-tray" onclick="openVideo('mvTray')" title="검사 방법 영상">
+                            <i class="fas fa-play"></i>
+                        </div>
                     </div>
                     <div class="ml-9">
                         <div class="text-sm text-gray-600 mb-4">외관 점검 - 손상 및 유실 여부 확인</div>
@@ -2975,37 +2975,30 @@
         function updateVideoButtons() {
             const links = JSON.parse(localStorage.getItem(STORAGE_KEYS.videos) || '{}');
             
-            // Hi-pot 영상 링크
-            const hipotLink = document.getElementById('video-link-hipot');
-            if (hipotLink && links.hipot) {
-                hipotLink.href = links.hipot;
-                hipotLink.style.display = 'inline';
-            }
+            // 모든 영상 버튼 업데이트
+            const buttonMappings = {
+                'video-btn-esd': 'esd',
+                'video-btn-wrist': 'wrist',
+                'video-btn-torque': 'torque',
+                'video-btn-hipot': 'hipot',
+                'video-btn-load': 'load',
+                'video-btn-gloves': 'gloves',
+                'video-btn-mv-fixture': 'mvFixture',
+                'video-btn-mv-tray': 'mvTray'
+            };
             
-            // Monthly 영상 링크들
-            const loadLink = document.getElementById('video-link-load');
-            if (loadLink && links.load) {
-                loadLink.href = links.load;
-                loadLink.style.display = 'inline';
-            }
-            
-            const glovesLink = document.getElementById('video-link-gloves');
-            if (glovesLink && links.gloves) {
-                glovesLink.href = links.gloves;
-                glovesLink.style.display = 'inline';
-            }
-            
-            const mvFixtureLink = document.getElementById('video-link-mv-fixture');
-            if (mvFixtureLink && links.mvFixture) {
-                mvFixtureLink.href = links.mvFixture;
-                mvFixtureLink.style.display = 'inline';
-            }
-            
-            const mvTrayLink = document.getElementById('video-link-mv-tray');
-            if (mvTrayLink && links.mvTray) {
-                mvTrayLink.href = links.mvTray;
-                mvTrayLink.style.display = 'inline';
-            }
+            Object.entries(buttonMappings).forEach(([btnId, linkKey]) => {
+                const btn = document.getElementById(btnId);
+                if (btn) {
+                    if (links[linkKey]) {
+                        btn.classList.remove('inactive');
+                        btn.classList.add('active');
+                    } else {
+                        btn.classList.remove('active');
+                        btn.classList.add('inactive');
+                    }
+                }
+            });
         }
         
         function openVideo(type) {

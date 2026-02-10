@@ -2379,8 +2379,8 @@
                         date: r.date,
                         type: 'Daily (작업자)',
                         inspector: r.workerName,
-                        items: `제전화: ${r.esd}, 어스링: ${r.wrist}, Torque: ${r.torque.result}`,
-                        result: (r.esd === 'Pass' && r.wrist === 'Pass' && r.torque.result === 'Pass') ? 'Pass' : 'Fail',
+                        items: `제전화: ${r.esd}, 어스링: ${r.wrist}, Torque: ${r.torque?.result || r.torque_result}`,
+                        result: (r.esd === 'Pass' && r.wrist === 'Pass' && (r.torque?.result === 'Pass' || r.torque_result === 'Pass')) ? 'Pass' : 'Fail',
                         remarks: r.remarks
                     });
                 });
@@ -2392,6 +2392,48 @@
                         inspector: r.inspector,
                         items: `Pass시료: ${r.passSample}, Fail시료: ${r.failSample}`,
                         result: r.overallResult,
+                        remarks: r.remarks
+                    });
+                });
+            } else if (currentHistoryType === 'monthly') {
+                const monthlyData = loadData(STORAGE_KEYS.monthly);
+                // period(YYYY-MM) 기준으로 필터링
+                const fromMonth = from.slice(0, 7);
+                const toMonth = to.slice(0, 7);
+                
+                monthlyData.filter(r => r.period >= fromMonth && r.period <= toMonth).forEach(r => {
+                    // Fixture 결과 요약
+                    let fixtureStatus = '-';
+                    if (r.mvFixtures) {
+                        const okCount = r.mvFixtures.filter(f => f.result === 'OK').length;
+                        fixtureStatus = `${okCount}/3대 OK`;
+                    }
+                    
+                    data.push({
+                        date: r.period,
+                        type: 'Monthly',
+                        inspector: r.inspector,
+                        items: `Load: ${r.loadPassResult || '-'}/${r.loadFailResult || '-'}, Gloves: ${r.glovesResult || '-'}, Fixture: ${fixtureStatus}, Tray: ${r.mvTrayResult || '-'}`,
+                        result: r.overallResult || 'Incomplete',
+                        remarks: r.remarks
+                    });
+                });
+            } else if (currentHistoryType === 'biyearly') {
+                const biyearlyData = loadData(STORAGE_KEYS.biyearly);
+                // period(YYYY-H1/H2) 기준으로 필터링
+                const fromYear = from.slice(0, 4);
+                const toYear = to.slice(0, 4);
+                
+                biyearlyData.filter(r => {
+                    const year = r.period.slice(0, 4);
+                    return year >= fromYear && year <= toYear;
+                }).forEach(r => {
+                    data.push({
+                        date: r.period,
+                        type: 'Bi-yearly',
+                        inspector: r.inspector,
+                        items: `ESD 접지 점검 (${Object.keys(r.results || {}).length}개 항목)`,
+                        result: r.overallResult || 'Incomplete',
                         remarks: r.remarks
                     });
                 });
@@ -2407,7 +2449,7 @@
                         <td class="py-3 px-4"><span class="badge badge-blue">${r.type}</span></td>
                         <td class="py-3 px-4 font-medium">${r.inspector}</td>
                         <td class="py-3 px-4 text-sm text-gray-600">${r.items}</td>
-                        <td class="py-3 px-4 text-center"><span class="badge ${r.result === 'Pass' ? 'badge-green' : 'badge-red'}">${r.result}</span></td>
+                        <td class="py-3 px-4 text-center"><span class="badge ${r.result === 'Pass' ? 'badge-green' : r.result === 'Incomplete' ? 'badge-yellow' : 'badge-red'}">${r.result}</span></td>
                         <td class="py-3 px-4 text-gray-500">${r.remarks || '-'}</td>
                     </tr>
                 `).join('');
@@ -2710,18 +2752,30 @@
             
             let tableRows = '';
             if (data.length === 0) {
-                tableRows = '<tr><td colspan="8" style="text-align: center; padding: 20px; color: #999;">해당 기간에 기록이 없습니다.</td></tr>';
+                tableRows = '<tr><td colspan="12" style="text-align: center; padding: 20px; color: #999;">해당 기간에 기록이 없습니다.</td></tr>';
             } else {
                 data.sort((a, b) => a.period.localeCompare(b.period)).forEach(record => {
                     const approvalTime = formatDateTime(record.createdAt);
+                    
+                    // Fixture 결과 요약
+                    let fixtureResults = '-';
+                    if (record.mvFixtures && record.mvFixtures.length > 0) {
+                        fixtureResults = record.mvFixtures.map((f, i) => 
+                            `#${i+1}: ${f.result || '-'}`
+                        ).join('<br>');
+                    }
+                    
                     tableRows += `
                         <tr>
                             <td style="border: 1px solid #000; padding: 8px; text-align: center;">${record.period}</td>
-                            <td style="border: 1px solid #000; padding: 8px; text-align: center; background: ${record.loadPassSample === 'Pass' ? '#d4edda' : '#f8d7da'};">${record.loadPassSample || '-'}</td>
-                            <td style="border: 1px solid #000; padding: 8px; text-align: center; background: ${record.loadFailSample === 'Fail' ? '#d4edda' : '#f8d7da'};">${record.loadFailSample || '-'}</td>
+                            <td style="border: 1px solid #000; padding: 8px; text-align: center;">${record.loadPassValue || '-'}</td>
+                            <td style="border: 1px solid #000; padding: 8px; text-align: center; background: ${record.loadPassResult === 'Pass' ? '#d4edda' : record.loadPassResult === 'Fail' ? '#f8d7da' : ''};">${record.loadPassResult || '-'}</td>
+                            <td style="border: 1px solid #000; padding: 8px; text-align: center;">${record.loadFailValue || '-'}</td>
+                            <td style="border: 1px solid #000; padding: 8px; text-align: center; background: ${record.loadFailResult === 'Pass' ? '#d4edda' : record.loadFailResult === 'Fail' ? '#f8d7da' : ''};">${record.loadFailResult || '-'}</td>
                             <td style="border: 1px solid #000; padding: 8px; text-align: center;">${record.glovesOpenDate || '-'}</td>
-                            <td style="border: 1px solid #000; padding: 8px; text-align: center;">${record.glovesExpiry || '-'}</td>
-                            <td style="border: 1px solid #000; padding: 8px; text-align: center; background: ${record.visionResult === 'Pass' ? '#d4edda' : record.visionResult === 'Fail' ? '#f8d7da' : ''};">${record.visionResult || '-'}</td>
+                            <td style="border: 1px solid #000; padding: 8px; text-align: center; background: ${record.glovesResult === 'Pass' ? '#d4edda' : record.glovesResult === 'Fail' ? '#f8d7da' : ''};">${record.glovesResult || '-'}</td>
+                            <td style="border: 1px solid #000; padding: 8px; text-align: center; font-size: 10px; background: ${record.mvFixtureResult === 'Pass' ? '#d4edda' : record.mvFixtureResult === 'Fail' ? '#f8d7da' : ''};">${fixtureResults}</td>
+                            <td style="border: 1px solid #000; padding: 8px; text-align: center; background: ${record.mvTrayResult === 'Pass' ? '#d4edda' : record.mvTrayResult === 'Fail' ? '#f8d7da' : ''};">${record.mvTrayResult || '-'}</td>
                             <td style="border: 1px solid #000; padding: 8px; text-align: center;">${record.inspector}</td>
                             <td style="border: 1px solid #000; padding: 8px; text-align: center; font-size: 10px;">${approvalTime}</td>
                         </tr>
@@ -2737,7 +2791,7 @@
                     <title>Monthly Check Sheet</title>
                     <style>
                         @page { size: A4 landscape; margin: 10mm; }
-                        body { font-family: Arial, sans-serif; font-size: 12px; margin: 0; padding: 15px; }
+                        body { font-family: Arial, sans-serif; font-size: 11px; margin: 0; padding: 15px; }
                         table { border-collapse: collapse; width: 100%; }
                         @media print {
                             body { -webkit-print-color-adjust: exact; print-color-adjust: exact; }
@@ -2758,18 +2812,22 @@
                         <table>
                             <thead>
                                 <tr style="background: #e9ecef;">
-                                    <th style="border: 1px solid #000; padding: 10px;" rowspan="2">Period</th>
-                                    <th style="border: 1px solid #000; padding: 10px;" colspan="2">Safety Tester Dummy Load</th>
-                                    <th style="border: 1px solid #000; padding: 10px;" colspan="2">Insulating Gloves</th>
-                                    <th style="border: 1px solid #000; padding: 10px;" rowspan="2">Vision Tool</th>
-                                    <th style="border: 1px solid #000; padding: 10px;" rowspan="2">Tester</th>
-                                    <th style="border: 1px solid #000; padding: 10px;" rowspan="2">Approval<br><span style="font-size:9px; font-weight:normal;">(Date/Time)</span></th>
+                                    <th style="border: 1px solid #000; padding: 8px;" rowspan="2">Period</th>
+                                    <th style="border: 1px solid #000; padding: 8px;" colspan="4">Safety Tester Dummy Load (GPT-9904)</th>
+                                    <th style="border: 1px solid #000; padding: 8px;" colspan="2">Insulating Gloves</th>
+                                    <th style="border: 1px solid #000; padding: 8px;" colspan="2">Machine Vision Test Tool</th>
+                                    <th style="border: 1px solid #000; padding: 8px;" rowspan="2">Tester</th>
+                                    <th style="border: 1px solid #000; padding: 8px;" rowspan="2">Approval<br><span style="font-size:9px; font-weight:normal;">(Date/Time)</span></th>
                                 </tr>
                                 <tr style="background: #e9ecef;">
-                                    <th style="border: 1px solid #000; padding: 6px; font-size: 10px;">Pass (1510±3Ω)</th>
-                                    <th style="border: 1px solid #000; padding: 6px; font-size: 10px;">Fail (1490±3Ω)</th>
-                                    <th style="border: 1px solid #000; padding: 6px; font-size: 10px;">Open Date</th>
-                                    <th style="border: 1px solid #000; padding: 6px; font-size: 10px;">Expiry Date</th>
+                                    <th style="border: 1px solid #000; padding: 5px; font-size: 9px;">Pass 측정값<br>(1507~1513Ω)</th>
+                                    <th style="border: 1px solid #000; padding: 5px; font-size: 9px;">결과</th>
+                                    <th style="border: 1px solid #000; padding: 5px; font-size: 9px;">Fail 측정값<br>(1487~1493Ω)</th>
+                                    <th style="border: 1px solid #000; padding: 5px; font-size: 9px;">결과</th>
+                                    <th style="border: 1px solid #000; padding: 5px; font-size: 9px;">Open Date</th>
+                                    <th style="border: 1px solid #000; padding: 5px; font-size: 9px;">Status</th>
+                                    <th style="border: 1px solid #000; padding: 5px; font-size: 9px;">Setting Fixture<br>(3대)</th>
+                                    <th style="border: 1px solid #000; padding: 5px; font-size: 9px;">Test Tray</th>
                                 </tr>
                             </thead>
                             <tbody>
@@ -2778,6 +2836,10 @@
                         </table>
                         
                         <div style="margin-top: 15px; font-size: 10px; color: #666;">
+                            * Dummy Load Spec: Pass 시료 1510±3Ω, Fail 시료 1490±3Ω<br>
+                            * Insulating Gloves: 개봉일로부터 6개월 이내 유효<br>
+                            * Machine Vision Setting Fixture 점검 항목: ① Fixture 및 Cartridge 손상/유실, ② Guide line 및 Focus Threshold label 손상<br>
+                            * Machine Vision Test Tray 점검 항목: ① Cartridge, Plunger, Tube 손상/유실, ② Foil 손상<br>
                             * 위 항목들은 ECO 없이 추가되거나 변경될 수 있다.
                         </div>
                     </div>

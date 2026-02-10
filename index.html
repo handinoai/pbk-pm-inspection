@@ -734,37 +734,103 @@
                     </div>
                 </div>
                 
-                <!-- 3. Machine Vision Setting Fixture -->
+                <!-- 3. Machine Vision Setting Fixture (3대) -->
                 <div class="inspection-item" id="monthly-item-mv-fixture">
                     <div class="flex items-center gap-3 mb-4">
                         <span class="w-6 h-6 bg-purple-100 text-purple-600 rounded-full flex items-center justify-center text-sm font-bold">3</span>
                         <h4 class="font-bold text-gray-900">Machine Vision Setting Fixture</h4>
+                        <span class="badge badge-purple">3대</span>
                         <div class="video-btn inactive" id="video-btn-mv-fixture" onclick="openVideo('mvFixture')" title="검사 방법 영상">
                             <i class="fas fa-play"></i>
                         </div>
                     </div>
                     <div class="ml-9">
                         <div class="text-sm text-gray-600 mb-4">외관 점검 - 손상 및 유실 여부 확인</div>
-                        <div class="mb-4">
-                            <label class="text-xs text-gray-500 block mb-2">관리 번호</label>
-                            <input type="text" id="mv-fixture-serial" class="input-field" style="width:200px" placeholder="관리 번호 입력">
+                        
+                        <!-- 점검 항목 설명 -->
+                        <div class="mb-4 p-3 bg-blue-50 rounded-lg text-sm text-blue-800">
+                            <div>① Fixture 및 Cartridge 손상 및 유실 없을 것</div>
+                            <div>② Guide line 및 Focus Threshold label 손상 없을 것</div>
                         </div>
-                        <div class="space-y-3 p-4 bg-gray-50 rounded-lg">
-                            <div class="flex items-center justify-between">
-                                <span class="text-sm text-gray-700">1. Fixture 및 Cartridge 손상 및 유실 없을 것</span>
-                                <div class="flex gap-2">
-                                    <button class="check-btn pass text-sm" onclick="setMVFixtureCheck(1, 'OK')">OK</button>
-                                    <button class="check-btn fail text-sm" onclick="setMVFixtureCheck(1, 'NG')">NG</button>
+                        
+                        <!-- 3대 점검 그리드 -->
+                        <div class="grid grid-cols-3 gap-4">
+                            <!-- Fixture #1 -->
+                            <div class="p-4 bg-gray-50 rounded-lg border-2 border-transparent" id="mv-fixture-card-1">
+                                <div class="text-center font-bold text-purple-600 mb-3">#1</div>
+                                <div class="mb-3">
+                                    <label class="text-xs text-gray-500 block mb-1">관리 번호</label>
+                                    <input type="text" id="mv-fixture-serial-1" class="input-field text-sm" placeholder="관리번호">
+                                </div>
+                                <div class="space-y-2">
+                                    <div class="flex items-center justify-between">
+                                        <span class="text-xs text-gray-600">항목 ①</span>
+                                        <div class="flex gap-1">
+                                            <button class="check-btn pass text-xs px-3 py-1" onclick="setMVFixtureCheck(1, 1, 'OK')">OK</button>
+                                            <button class="check-btn fail text-xs px-3 py-1" onclick="setMVFixtureCheck(1, 1, 'NG')">NG</button>
+                                        </div>
+                                    </div>
+                                    <div class="flex items-center justify-between">
+                                        <span class="text-xs text-gray-600">항목 ②</span>
+                                        <div class="flex gap-1">
+                                            <button class="check-btn pass text-xs px-3 py-1" onclick="setMVFixtureCheck(1, 2, 'OK')">OK</button>
+                                            <button class="check-btn fail text-xs px-3 py-1" onclick="setMVFixtureCheck(1, 2, 'NG')">NG</button>
+                                        </div>
+                                    </div>
                                 </div>
                             </div>
-                            <div class="flex items-center justify-between">
-                                <span class="text-sm text-gray-700">2. Guide line 및 Focus Threshold label 손상 없을 것</span>
-                                <div class="flex gap-2">
-                                    <button class="check-btn pass text-sm" onclick="setMVFixtureCheck(2, 'OK')">OK</button>
-                                    <button class="check-btn fail text-sm" onclick="setMVFixtureCheck(2, 'NG')">NG</button>
+                            
+                            <!-- Fixture #2 -->
+                            <div class="p-4 bg-gray-50 rounded-lg border-2 border-transparent" id="mv-fixture-card-2">
+                                <div class="text-center font-bold text-purple-600 mb-3">#2</div>
+                                <div class="mb-3">
+                                    <label class="text-xs text-gray-500 block mb-1">관리 번호</label>
+                                    <input type="text" id="mv-fixture-serial-2" class="input-field text-sm" placeholder="관리번호">
+                                </div>
+                                <div class="space-y-2">
+                                    <div class="flex items-center justify-between">
+                                        <span class="text-xs text-gray-600">항목 ①</span>
+                                        <div class="flex gap-1">
+                                            <button class="check-btn pass text-xs px-3 py-1" onclick="setMVFixtureCheck(2, 1, 'OK')">OK</button>
+                                            <button class="check-btn fail text-xs px-3 py-1" onclick="setMVFixtureCheck(2, 1, 'NG')">NG</button>
+                                        </div>
+                                    </div>
+                                    <div class="flex items-center justify-between">
+                                        <span class="text-xs text-gray-600">항목 ②</span>
+                                        <div class="flex gap-1">
+                                            <button class="check-btn pass text-xs px-3 py-1" onclick="setMVFixtureCheck(2, 2, 'OK')">OK</button>
+                                            <button class="check-btn fail text-xs px-3 py-1" onclick="setMVFixtureCheck(2, 2, 'NG')">NG</button>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                            
+                            <!-- Fixture #3 -->
+                            <div class="p-4 bg-gray-50 rounded-lg border-2 border-transparent" id="mv-fixture-card-3">
+                                <div class="text-center font-bold text-purple-600 mb-3">#3</div>
+                                <div class="mb-3">
+                                    <label class="text-xs text-gray-500 block mb-1">관리 번호</label>
+                                    <input type="text" id="mv-fixture-serial-3" class="input-field text-sm" placeholder="관리번호">
+                                </div>
+                                <div class="space-y-2">
+                                    <div class="flex items-center justify-between">
+                                        <span class="text-xs text-gray-600">항목 ①</span>
+                                        <div class="flex gap-1">
+                                            <button class="check-btn pass text-xs px-3 py-1" onclick="setMVFixtureCheck(3, 1, 'OK')">OK</button>
+                                            <button class="check-btn fail text-xs px-3 py-1" onclick="setMVFixtureCheck(3, 1, 'NG')">NG</button>
+                                        </div>
+                                    </div>
+                                    <div class="flex items-center justify-between">
+                                        <span class="text-xs text-gray-600">항목 ②</span>
+                                        <div class="flex gap-1">
+                                            <button class="check-btn pass text-xs px-3 py-1" onclick="setMVFixtureCheck(3, 2, 'OK')">OK</button>
+                                            <button class="check-btn fail text-xs px-3 py-1" onclick="setMVFixtureCheck(3, 2, 'NG')">NG</button>
+                                        </div>
+                                    </div>
                                 </div>
                             </div>
                         </div>
+                        
                         <div class="mt-3">
                             <input type="text" id="mv-fixture-remarks" class="input-field" placeholder="이상 발견 시 내용 기재...">
                         </div>
@@ -2155,8 +2221,15 @@
             const loadPassValue = document.getElementById('load-pass-value').value;
             const loadFailValue = document.getElementById('load-fail-value').value;
             
-            // Machine Vision 결과 확인
-            const mvFixtureSerial = document.getElementById('mv-fixture-serial').value.trim();
+            // Machine Vision Fixture 결과 (3대)
+            const mvFixtures = [1, 2, 3].map(n => ({
+                serial: document.getElementById(`mv-fixture-serial-${n}`).value.trim(),
+                check1: mvFixtureResults[n][1],
+                check2: mvFixtureResults[n][2],
+                result: (mvFixtureResults[n][1] === 'OK' && mvFixtureResults[n][2] === 'OK') ? 'OK' : 
+                        (mvFixtureResults[n][1] && mvFixtureResults[n][2]) ? 'NG' : null
+            }));
+            
             const mvTraySerial = document.getElementById('mv-tray-serial').value.trim();
             
             const record = {
@@ -2172,10 +2245,8 @@
                 glovesOpenDate: document.getElementById('gloves-open-date').value,
                 glovesExpiry: document.getElementById('gloves-expiry').value,
                 glovesResult: monthlyResults['gloves'],
-                // Machine Vision Setting Fixture
-                mvFixtureSerial: mvFixtureSerial,
-                mvFixtureCheck1: mvFixtureResults[1],
-                mvFixtureCheck2: mvFixtureResults[2],
+                // Machine Vision Setting Fixture (3대)
+                mvFixtures: mvFixtures,
                 mvFixtureResult: monthlyResults['mv-fixture'],
                 mvFixtureRemarks: document.getElementById('mv-fixture-remarks').value,
                 // Machine Vision Test Tray
@@ -3027,26 +3098,49 @@
             }
         }
         
-        // Machine Vision Fixture 체크
-        let mvFixtureResults = { 1: null, 2: null };
-        function setMVFixtureCheck(item, result) {
-            mvFixtureResults[item] = result;
-            const buttons = document.querySelectorAll(`#monthly-item-mv-fixture .check-btn`);
-            buttons.forEach(btn => {
-                const btnItem = parseInt(btn.closest('.flex').querySelector('span').textContent.charAt(0));
-                if (btnItem === item) {
-                    btn.classList.remove('selected');
-                    if ((result === 'OK' && btn.classList.contains('pass')) || 
-                        (result === 'NG' && btn.classList.contains('fail'))) {
-                        btn.classList.add('selected');
-                    }
-                }
-            });
+        // Machine Vision Fixture 체크 (3대)
+        let mvFixtureResults = {
+            1: { 1: null, 2: null },
+            2: { 1: null, 2: null },
+            3: { 1: null, 2: null }
+        };
+        
+        function setMVFixtureCheck(fixtureNum, checkItem, result) {
+            mvFixtureResults[fixtureNum][checkItem] = result;
             
-            // 전체 결과 업데이트
-            if (mvFixtureResults[1] && mvFixtureResults[2]) {
-                const overall = (mvFixtureResults[1] === 'OK' && mvFixtureResults[2] === 'OK') ? 'Pass' : 'Fail';
-                setMonthlyResult('mv-fixture', overall);
+            // 해당 카드의 버튼 상태 업데이트
+            const card = document.getElementById(`mv-fixture-card-${fixtureNum}`);
+            if (card) {
+                const rows = card.querySelectorAll('.space-y-2 > div');
+                const row = rows[checkItem - 1];
+                if (row) {
+                    row.querySelectorAll('.check-btn').forEach(btn => {
+                        btn.classList.remove('selected');
+                        if ((result === 'OK' && btn.classList.contains('pass')) || 
+                            (result === 'NG' && btn.classList.contains('fail'))) {
+                            btn.classList.add('selected');
+                        }
+                    });
+                }
+                
+                // 카드 완료 상태 표시
+                if (mvFixtureResults[fixtureNum][1] && mvFixtureResults[fixtureNum][2]) {
+                    const allOK = mvFixtureResults[fixtureNum][1] === 'OK' && mvFixtureResults[fixtureNum][2] === 'OK';
+                    card.classList.remove('border-green-400', 'border-red-400');
+                    card.classList.add(allOK ? 'border-green-400' : 'border-red-400');
+                }
+            }
+            
+            // 전체 결과 업데이트 (3대 모두 완료 시)
+            const allComplete = [1, 2, 3].every(n => 
+                mvFixtureResults[n][1] && mvFixtureResults[n][2]
+            );
+            
+            if (allComplete) {
+                const allOK = [1, 2, 3].every(n => 
+                    mvFixtureResults[n][1] === 'OK' && mvFixtureResults[n][2] === 'OK'
+                );
+                setMonthlyResult('mv-fixture', allOK ? 'Pass' : 'Fail');
             }
         }
         

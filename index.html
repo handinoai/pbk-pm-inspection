@@ -533,10 +533,20 @@
             <!-- Safety Tester Hi-pot (1일 1회) -->
             <div class="card">
                 <div class="flex items-center justify-between mb-4">
-                    <h3 class="font-bold text-gray-900">
-                        <i class="fas fa-bolt text-amber-500 mr-2"></i>Safety Tester Dummy Hi-pot Test
-                    </h3>
-                    <span class="badge badge-yellow">1일 1회 (담당자)</span>
+                    <div class="flex items-center gap-3">
+                        <h3 class="font-bold text-gray-900">
+                            <i class="fas fa-bolt text-amber-500 mr-2"></i>Safety Tester Dummy Hi-pot Test
+                        </h3>
+                        <a href="#" id="video-link-hipot" target="_blank" class="text-red-500 hover:text-red-700" title="검사 방법 영상 보기" style="display:none;">
+                            <i class="fas fa-play-circle text-xl"></i>
+                        </a>
+                    </div>
+                    <div class="flex items-center gap-3">
+                        <div id="hipot-today-status" class="hidden">
+                            <span class="badge badge-green"><i class="fas fa-check mr-1"></i>금일 완료</span>
+                        </div>
+                        <span class="badge badge-yellow">1일 1회 (담당자)</span>
+                    </div>
                 </div>
                 
                 <div class="inspection-item" id="daily-item-hipot">
@@ -631,27 +641,66 @@
                         <span class="w-6 h-6 bg-purple-100 text-purple-600 rounded-full flex items-center justify-center text-sm font-bold">1</span>
                         <h4 class="font-bold text-gray-900">Safety Tester Dummy Load Test</h4>
                         <span class="badge badge-purple">GPT-9904</span>
+                        <a href="#" id="video-link-load" target="_blank" class="text-red-500 hover:text-red-700 ml-2" title="검사 방법 영상 보기" style="display:none;">
+                            <i class="fas fa-play-circle text-lg"></i>
+                        </a>
                     </div>
                     <div class="ml-9">
-                        <div class="text-sm text-gray-600 mb-4">더미로드 저항값 측정으로 Safety Tester 정상 동작 확인</div>
+                        <div class="text-sm text-gray-600 mb-4">DMM으로 더미로드 저항값 측정 (Spec 범위 내 확인)</div>
                         <div class="grid grid-cols-2 gap-4">
                             <div class="p-4 bg-green-50 rounded-lg">
-                                <div class="text-sm font-medium text-green-800 mb-2">Pass 시료 체크</div>
-                                <div class="text-xs text-green-600 mb-3">Spec: 1510 ± 3Ω</div>
-                                <div class="flex gap-2">
-                                    <button class="check-btn pass" onclick="setMonthlyResult('load-pass', 'Pass')">Pass</button>
-                                    <button class="check-btn fail" onclick="setMonthlyResult('load-pass', 'Fail')">Fail</button>
+                                <div class="text-sm font-medium text-green-800 mb-2">Pass 시료 측정</div>
+                                <div class="text-xs text-green-600 mb-3">Spec: 1510 ± 3Ω (1507~1513Ω)</div>
+                                <div class="flex items-center gap-3">
+                                    <input type="number" id="load-pass-value" class="input-field" style="width:120px" placeholder="측정값" step="0.1">
+                                    <span class="text-sm text-gray-500">Ω</span>
+                                    <div id="load-pass-result" class="auto-judgment pending text-sm">입력 대기</div>
                                 </div>
                             </div>
                             <div class="p-4 bg-red-50 rounded-lg">
-                                <div class="text-sm font-medium text-red-800 mb-2">Fail 시료 체크</div>
-                                <div class="text-xs text-red-600 mb-3">Spec: 1490 ± 3Ω</div>
-                                <div class="flex gap-2">
-                                    <button class="check-btn pass" onclick="setMonthlyResult('load-fail', 'Pass')">Pass</button>
-                                    <button class="check-btn fail" onclick="setMonthlyResult('load-fail', 'Fail')">Fail</button>
+                                <div class="text-sm font-medium text-red-800 mb-2">Fail 시료 측정</div>
+                                <div class="text-xs text-red-600 mb-3">Spec: 1490 ± 3Ω (1487~1493Ω)</div>
+                                <div class="flex items-center gap-3">
+                                    <input type="number" id="load-fail-value" class="input-field" style="width:120px" placeholder="측정값" step="0.1">
+                                    <span class="text-sm text-gray-500">Ω</span>
+                                    <div id="load-fail-result" class="auto-judgment pending text-sm">입력 대기</div>
                                 </div>
                             </div>
                         </div>
+                        <script>
+                            document.getElementById('load-pass-value').addEventListener('input', function() {
+                                const val = parseFloat(this.value);
+                                const result = document.getElementById('load-pass-result');
+                                if (isNaN(val)) {
+                                    result.className = 'auto-judgment pending text-sm';
+                                    result.textContent = '입력 대기';
+                                } else if (val >= 1507 && val <= 1513) {
+                                    result.className = 'auto-judgment pass text-sm';
+                                    result.textContent = 'Pass';
+                                    setMonthlyResult('load-pass', 'Pass');
+                                } else {
+                                    result.className = 'auto-judgment fail text-sm';
+                                    result.textContent = 'Fail';
+                                    setMonthlyResult('load-pass', 'Fail');
+                                }
+                            });
+                            document.getElementById('load-fail-value').addEventListener('input', function() {
+                                const val = parseFloat(this.value);
+                                const result = document.getElementById('load-fail-result');
+                                if (isNaN(val)) {
+                                    result.className = 'auto-judgment pending text-sm';
+                                    result.textContent = '입력 대기';
+                                } else if (val >= 1487 && val <= 1493) {
+                                    result.className = 'auto-judgment pass text-sm';
+                                    result.textContent = 'Pass';
+                                    setMonthlyResult('load-fail', 'Pass');
+                                } else {
+                                    result.className = 'auto-judgment fail text-sm';
+                                    result.textContent = 'Fail';
+                                    setMonthlyResult('load-fail', 'Fail');
+                                }
+                            });
+                        </script>
                     </div>
                 </div>
                 
@@ -660,6 +709,9 @@
                     <div class="flex items-center gap-3 mb-4">
                         <span class="w-6 h-6 bg-purple-100 text-purple-600 rounded-full flex items-center justify-center text-sm font-bold">2</span>
                         <h4 class="font-bold text-gray-900">Insulating Gloves (절연장갑)</h4>
+                        <a href="#" id="video-link-gloves" target="_blank" class="text-red-500 hover:text-red-700 ml-2" title="검사 방법 영상 보기" style="display:none;">
+                            <i class="fas fa-play-circle text-lg"></i>
+                        </a>
                     </div>
                     <div class="ml-9">
                         <div class="text-sm text-gray-600 mb-4">유효기간 확인 (개봉일로부터 6개월 이내)</div>
@@ -682,20 +734,76 @@
                     </div>
                 </div>
                 
-                <!-- 3. Machine Vision Tool -->
-                <div class="inspection-item" id="monthly-item-vision">
+                <!-- 3. Machine Vision Setting Fixture -->
+                <div class="inspection-item" id="monthly-item-mv-fixture">
                     <div class="flex items-center gap-3 mb-4">
                         <span class="w-6 h-6 bg-purple-100 text-purple-600 rounded-full flex items-center justify-center text-sm font-bold">3</span>
-                        <h4 class="font-bold text-gray-900">Machine Vision Test Tool</h4>
+                        <h4 class="font-bold text-gray-900">Machine Vision Setting Fixture</h4>
+                        <a href="#" id="video-link-mv-fixture" target="_blank" class="text-red-500 hover:text-red-700 ml-2" title="검사 방법 영상 보기" style="display:none;">
+                            <i class="fas fa-play-circle text-lg"></i>
+                        </a>
                     </div>
                     <div class="ml-9">
-                        <div class="text-sm text-gray-600 mb-4">외관 점검 - 유실 및 파손 여부 확인</div>
-                        <div class="flex items-center gap-4">
-                            <div class="flex gap-2">
-                                <button class="check-btn pass" onclick="setMonthlyResult('vision', 'Pass')">정상 (Pass)</button>
-                                <button class="check-btn fail" onclick="setMonthlyResult('vision', 'Fail')">이상 (Fail)</button>
+                        <div class="text-sm text-gray-600 mb-4">외관 점검 - 손상 및 유실 여부 확인</div>
+                        <div class="mb-4">
+                            <label class="text-xs text-gray-500 block mb-2">관리 번호</label>
+                            <input type="text" id="mv-fixture-serial" class="input-field" style="width:200px" placeholder="관리 번호 입력">
+                        </div>
+                        <div class="space-y-3 p-4 bg-gray-50 rounded-lg">
+                            <div class="flex items-center justify-between">
+                                <span class="text-sm text-gray-700">1. Fixture 및 Cartridge 손상 및 유실 없을 것</span>
+                                <div class="flex gap-2">
+                                    <button class="check-btn pass text-sm" onclick="setMVFixtureCheck(1, 'OK')">OK</button>
+                                    <button class="check-btn fail text-sm" onclick="setMVFixtureCheck(1, 'NG')">NG</button>
+                                </div>
                             </div>
-                            <input type="text" id="vision-remarks" class="input-field flex-1" placeholder="이상 발견 시 내용 기재...">
+                            <div class="flex items-center justify-between">
+                                <span class="text-sm text-gray-700">2. Guide line 및 Focus Threshold label 손상 없을 것</span>
+                                <div class="flex gap-2">
+                                    <button class="check-btn pass text-sm" onclick="setMVFixtureCheck(2, 'OK')">OK</button>
+                                    <button class="check-btn fail text-sm" onclick="setMVFixtureCheck(2, 'NG')">NG</button>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="mt-3">
+                            <input type="text" id="mv-fixture-remarks" class="input-field" placeholder="이상 발견 시 내용 기재...">
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- 4. Machine Vision Test Tray -->
+                <div class="inspection-item" id="monthly-item-mv-tray">
+                    <div class="flex items-center gap-3 mb-4">
+                        <span class="w-6 h-6 bg-purple-100 text-purple-600 rounded-full flex items-center justify-center text-sm font-bold">4</span>
+                        <h4 class="font-bold text-gray-900">Machine Vision Test Tray</h4>
+                        <a href="#" id="video-link-mv-tray" target="_blank" class="text-red-500 hover:text-red-700 ml-2" title="검사 방법 영상 보기" style="display:none;">
+                            <i class="fas fa-play-circle text-lg"></i>
+                        </a>
+                    </div>
+                    <div class="ml-9">
+                        <div class="text-sm text-gray-600 mb-4">외관 점검 - 손상 및 유실 여부 확인</div>
+                        <div class="mb-4">
+                            <label class="text-xs text-gray-500 block mb-2">관리 번호</label>
+                            <input type="text" id="mv-tray-serial" class="input-field" style="width:200px" placeholder="관리 번호 입력">
+                        </div>
+                        <div class="space-y-3 p-4 bg-gray-50 rounded-lg">
+                            <div class="flex items-center justify-between">
+                                <span class="text-sm text-gray-700">1. Cartridge, Plunger, Tube 손상 및 유실 없을 것</span>
+                                <div class="flex gap-2">
+                                    <button class="check-btn pass text-sm" onclick="setMVTrayCheck(1, 'OK')">OK</button>
+                                    <button class="check-btn fail text-sm" onclick="setMVTrayCheck(1, 'NG')">NG</button>
+                                </div>
+                            </div>
+                            <div class="flex items-center justify-between">
+                                <span class="text-sm text-gray-700">2. Foil 찍힘, 찢어짐 등 손상 없을 것</span>
+                                <div class="flex gap-2">
+                                    <button class="check-btn pass text-sm" onclick="setMVTrayCheck(2, 'OK')">OK</button>
+                                    <button class="check-btn fail text-sm" onclick="setMVTrayCheck(2, 'NG')">NG</button>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="mt-3">
+                            <input type="text" id="mv-tray-remarks" class="input-field" placeholder="이상 발견 시 내용 기재...">
                         </div>
                     </div>
                 </div>
@@ -1097,23 +1205,52 @@
             <!-- Deep How 링크 설정 -->
             <div class="card">
                 <h3 class="font-bold text-gray-900 mb-4"><i class="fas fa-video text-red-500 mr-2"></i>Deep How 영상 링크 설정</h3>
-                <div class="space-y-4">
+                
+                <!-- Daily 점검 영상 -->
+                <h4 class="font-medium text-gray-700 mb-3 mt-4">Daily 점검</h4>
+                <div class="space-y-3 mb-6">
                     <div class="flex items-center gap-4">
-                        <label class="w-40 font-medium text-gray-700">제전화</label>
-                        <input type="text" id="video-esd" class="input-field" placeholder="Deep How 딥링크 URL">
+                        <label class="w-48 text-sm text-gray-600">제전화</label>
+                        <input type="text" id="video-esd" class="input-field flex-1" placeholder="Deep How 딥링크 URL">
                     </div>
                     <div class="flex items-center gap-4">
-                        <label class="w-40 font-medium text-gray-700">어스링</label>
-                        <input type="text" id="video-wrist" class="input-field" placeholder="Deep How 딥링크 URL">
+                        <label class="w-48 text-sm text-gray-600">어스링</label>
+                        <input type="text" id="video-wrist" class="input-field flex-1" placeholder="Deep How 딥링크 URL">
                     </div>
                     <div class="flex items-center gap-4">
-                        <label class="w-40 font-medium text-gray-700">전동드라이버</label>
-                        <input type="text" id="video-torque" class="input-field" placeholder="Deep How 딥링크 URL">
+                        <label class="w-48 text-sm text-gray-600">전동드라이버</label>
+                        <input type="text" id="video-torque" class="input-field flex-1" placeholder="Deep How 딥링크 URL">
                     </div>
-                    <button class="btn-primary" onclick="saveVideoLinks()">
-                        <i class="fas fa-save mr-2"></i>저장
-                    </button>
+                    <div class="flex items-center gap-4">
+                        <label class="w-48 text-sm text-gray-600">Hi-pot Test</label>
+                        <input type="text" id="video-hipot" class="input-field flex-1" placeholder="Deep How 딥링크 URL">
+                    </div>
                 </div>
+                
+                <!-- Monthly 점검 영상 -->
+                <h4 class="font-medium text-gray-700 mb-3 border-t pt-4">Monthly 점검</h4>
+                <div class="space-y-3 mb-6">
+                    <div class="flex items-center gap-4">
+                        <label class="w-48 text-sm text-gray-600">Dummy Load Test</label>
+                        <input type="text" id="video-load" class="input-field flex-1" placeholder="Deep How 딥링크 URL">
+                    </div>
+                    <div class="flex items-center gap-4">
+                        <label class="w-48 text-sm text-gray-600">Insulating Gloves</label>
+                        <input type="text" id="video-gloves" class="input-field flex-1" placeholder="Deep How 딥링크 URL">
+                    </div>
+                    <div class="flex items-center gap-4">
+                        <label class="w-48 text-sm text-gray-600">M/V Setting Fixture</label>
+                        <input type="text" id="video-mv-fixture" class="input-field flex-1" placeholder="Deep How 딥링크 URL">
+                    </div>
+                    <div class="flex items-center gap-4">
+                        <label class="w-48 text-sm text-gray-600">M/V Test Tray</label>
+                        <input type="text" id="video-mv-tray" class="input-field flex-1" placeholder="Deep How 딥링크 URL">
+                    </div>
+                </div>
+                
+                <button class="btn-primary" onclick="saveVideoLinks()">
+                    <i class="fas fa-save mr-2"></i>저장
+                </button>
             </div>
         </div>
     </div>
@@ -1698,6 +1835,8 @@
             renderSettingsWorkers();
             loadVideoLinksToForm();
             loadReportStats();
+            checkHipotTodayStatus();
+            updateVideoButtons();
             
             // Torque WebSocket 연결 시도
             setTimeout(() => {
@@ -1907,6 +2046,17 @@
         }
         
         function submitHipotCheck() {
+            // 이미 금일 완료되었는지 확인
+            const today = getLocalDateString();
+            const existingData = loadData(STORAGE_KEYS.dailyHipot);
+            const todayRecord = existingData.find(r => r.date === today);
+            
+            if (todayRecord) {
+                if (!confirm('금일 Hi-pot 점검이 이미 완료되었습니다. 덮어쓰시겠습니까?')) {
+                    return;
+                }
+            }
+            
             const inspector = document.getElementById('hipot-inspector').value.trim();
             if (!inspector) {
                 alert('검사자 ID를 입력해주세요.');
@@ -1917,7 +2067,6 @@
                 return;
             }
             
-            const today = getLocalDateString();
             const record = {
                 id: Date.now(),
                 date: today,
@@ -1957,26 +2106,16 @@
             document.querySelectorAll('#daily-item-hipot .check-btn').forEach(btn => btn.classList.remove('selected'));
             document.getElementById('hipot-inspector').value = '';
             document.getElementById('hipot-remarks').value = '';
+            
+            // 완료 상태 업데이트
+            checkHipotTodayStatus();
         }
         
         // ============ Monthly Check ============
         function setMonthlyResult(item, result) {
             monthlyResults[item] = result;
             
-            let container;
-            if (item === 'load-pass') container = document.querySelector('#monthly-item-load .bg-green-50');
-            else if (item === 'load-fail') container = document.querySelector('#monthly-item-load .bg-red-50');
-            else if (item === 'vision') container = document.getElementById('monthly-item-vision');
-            
-            if (container) {
-                container.querySelectorAll('.check-btn').forEach(btn => {
-                    btn.classList.remove('selected');
-                    if ((btn.classList.contains('pass') && result === 'Pass') ||
-                        (btn.classList.contains('fail') && result === 'Fail')) {
-                        btn.classList.add('selected');
-                    }
-                });
-            }
+            // 기존 버튼 선택 처리는 측정값 입력 방식으로 대체됨
         }
         
         function checkGlovesExpiry() {
@@ -1995,9 +2134,11 @@
             if (today <= expiry) {
                 status.className = 'auto-judgment pass';
                 status.textContent = '유효';
+                monthlyResults['gloves'] = 'Pass';
             } else {
                 status.className = 'auto-judgment fail';
                 status.textContent = '만료';
+                monthlyResults['gloves'] = 'Fail';
             }
         }
         
@@ -2010,18 +2151,43 @@
                 return;
             }
             
+            // Dummy Load 측정값 가져오기
+            const loadPassValue = document.getElementById('load-pass-value').value;
+            const loadFailValue = document.getElementById('load-fail-value').value;
+            
+            // Machine Vision 결과 확인
+            const mvFixtureSerial = document.getElementById('mv-fixture-serial').value.trim();
+            const mvTraySerial = document.getElementById('mv-tray-serial').value.trim();
+            
             const record = {
                 id: Date.now(),
                 period: period,
                 inspector: inspector,
-                loadPassSample: monthlyResults['load-pass'],
-                loadFailSample: monthlyResults['load-fail'],
+                // Dummy Load Test
+                loadPassValue: loadPassValue,
+                loadPassResult: monthlyResults['load-pass'],
+                loadFailValue: loadFailValue,
+                loadFailResult: monthlyResults['load-fail'],
+                // Gloves
                 glovesOpenDate: document.getElementById('gloves-open-date').value,
                 glovesExpiry: document.getElementById('gloves-expiry').value,
-                visionResult: monthlyResults['vision'],
-                visionRemarks: document.getElementById('vision-remarks').value,
+                glovesResult: monthlyResults['gloves'],
+                // Machine Vision Setting Fixture
+                mvFixtureSerial: mvFixtureSerial,
+                mvFixtureCheck1: mvFixtureResults[1],
+                mvFixtureCheck2: mvFixtureResults[2],
+                mvFixtureResult: monthlyResults['mv-fixture'],
+                mvFixtureRemarks: document.getElementById('mv-fixture-remarks').value,
+                // Machine Vision Test Tray
+                mvTraySerial: mvTraySerial,
+                mvTrayCheck1: mvTrayResults[1],
+                mvTrayCheck2: mvTrayResults[2],
+                mvTrayResult: monthlyResults['mv-tray'],
+                mvTrayRemarks: document.getElementById('mv-tray-remarks').value,
+                // 종합
                 remarks: document.getElementById('monthly-remarks').value,
-                createdAt: new Date().toISOString()
+                overallResult: calculateMonthlyOverall(),
+                createdAt: getLocalDateTimeString()
             };
             
             const data = loadData(STORAGE_KEYS.monthly);
@@ -2034,6 +2200,22 @@
             saveData(STORAGE_KEYS.monthly, data);
             
             alert(`${period} Monthly 점검이 저장되었습니다.`);
+            loadReportStats();
+        }
+        
+        function calculateMonthlyOverall() {
+            const results = [
+                monthlyResults['load-pass'],
+                monthlyResults['load-fail'],
+                monthlyResults['gloves'],
+                monthlyResults['mv-fixture'],
+                monthlyResults['mv-tray']
+            ];
+            
+            // 모든 항목이 Pass이면 Pass, 하나라도 Fail이면 Fail, 미입력이면 Incomplete
+            if (results.some(r => r === 'Fail')) return 'Fail';
+            if (results.every(r => r === 'Pass')) return 'Pass';
+            return 'Incomplete';
         }
         
         // ============ Bi-yearly Check ============
@@ -2758,16 +2940,32 @@
         // ============ Video Links ============
         function loadVideoLinksToForm() {
             const links = JSON.parse(localStorage.getItem(STORAGE_KEYS.videos) || '{}');
+            // Daily
             document.getElementById('video-esd').value = links.esd || '';
             document.getElementById('video-wrist').value = links.wrist || '';
             document.getElementById('video-torque').value = links.torque || '';
+            document.getElementById('video-hipot').value = links.hipot || '';
+            // Monthly
+            document.getElementById('video-load').value = links.load || '';
+            document.getElementById('video-gloves').value = links.gloves || '';
+            document.getElementById('video-mv-fixture').value = links.mvFixture || '';
+            document.getElementById('video-mv-tray').value = links.mvTray || '';
+            
+            updateVideoButtons();
         }
         
         function saveVideoLinks() {
             const links = {
+                // Daily
                 esd: document.getElementById('video-esd').value.trim(),
                 wrist: document.getElementById('video-wrist').value.trim(),
-                torque: document.getElementById('video-torque').value.trim()
+                torque: document.getElementById('video-torque').value.trim(),
+                hipot: document.getElementById('video-hipot').value.trim(),
+                // Monthly
+                load: document.getElementById('video-load').value.trim(),
+                gloves: document.getElementById('video-gloves').value.trim(),
+                mvFixture: document.getElementById('video-mv-fixture').value.trim(),
+                mvTray: document.getElementById('video-mv-tray').value.trim()
             };
             localStorage.setItem(STORAGE_KEYS.videos, JSON.stringify(links));
             updateVideoButtons();
@@ -2776,7 +2974,38 @@
         
         function updateVideoButtons() {
             const links = JSON.parse(localStorage.getItem(STORAGE_KEYS.videos) || '{}');
-            // 버튼 상태 업데이트 로직
+            
+            // Hi-pot 영상 링크
+            const hipotLink = document.getElementById('video-link-hipot');
+            if (hipotLink && links.hipot) {
+                hipotLink.href = links.hipot;
+                hipotLink.style.display = 'inline';
+            }
+            
+            // Monthly 영상 링크들
+            const loadLink = document.getElementById('video-link-load');
+            if (loadLink && links.load) {
+                loadLink.href = links.load;
+                loadLink.style.display = 'inline';
+            }
+            
+            const glovesLink = document.getElementById('video-link-gloves');
+            if (glovesLink && links.gloves) {
+                glovesLink.href = links.gloves;
+                glovesLink.style.display = 'inline';
+            }
+            
+            const mvFixtureLink = document.getElementById('video-link-mv-fixture');
+            if (mvFixtureLink && links.mvFixture) {
+                mvFixtureLink.href = links.mvFixture;
+                mvFixtureLink.style.display = 'inline';
+            }
+            
+            const mvTrayLink = document.getElementById('video-link-mv-tray');
+            if (mvTrayLink && links.mvTray) {
+                mvTrayLink.href = links.mvTray;
+                mvTrayLink.style.display = 'inline';
+            }
         }
         
         function openVideo(type) {
@@ -2785,6 +3014,69 @@
                 window.open(links[type], '_blank');
             } else {
                 alert('등록된 영상이 없습니다. 설정에서 Deep How 링크를 등록해주세요.');
+            }
+        }
+        
+        // Hi-pot 금일 완료 여부 확인
+        function checkHipotTodayStatus() {
+            const today = getLocalDateString();
+            const hipotData = loadData(STORAGE_KEYS.dailyHipot);
+            const todayRecord = hipotData.find(r => r.date === today);
+            
+            const statusDiv = document.getElementById('hipot-today-status');
+            const hipotSection = document.getElementById('daily-item-hipot');
+            
+            if (todayRecord) {
+                statusDiv.classList.remove('hidden');
+                // 이미 완료된 경우 입력 비활성화 (선택적)
+            } else {
+                statusDiv.classList.add('hidden');
+            }
+        }
+        
+        // Machine Vision Fixture 체크
+        let mvFixtureResults = { 1: null, 2: null };
+        function setMVFixtureCheck(item, result) {
+            mvFixtureResults[item] = result;
+            const buttons = document.querySelectorAll(`#monthly-item-mv-fixture .check-btn`);
+            buttons.forEach(btn => {
+                const btnItem = parseInt(btn.closest('.flex').querySelector('span').textContent.charAt(0));
+                if (btnItem === item) {
+                    btn.classList.remove('selected');
+                    if ((result === 'OK' && btn.classList.contains('pass')) || 
+                        (result === 'NG' && btn.classList.contains('fail'))) {
+                        btn.classList.add('selected');
+                    }
+                }
+            });
+            
+            // 전체 결과 업데이트
+            if (mvFixtureResults[1] && mvFixtureResults[2]) {
+                const overall = (mvFixtureResults[1] === 'OK' && mvFixtureResults[2] === 'OK') ? 'Pass' : 'Fail';
+                setMonthlyResult('mv-fixture', overall);
+            }
+        }
+        
+        // Machine Vision Tray 체크
+        let mvTrayResults = { 1: null, 2: null };
+        function setMVTrayCheck(item, result) {
+            mvTrayResults[item] = result;
+            const buttons = document.querySelectorAll(`#monthly-item-mv-tray .check-btn`);
+            buttons.forEach(btn => {
+                const btnItem = parseInt(btn.closest('.flex').querySelector('span').textContent.charAt(0));
+                if (btnItem === item) {
+                    btn.classList.remove('selected');
+                    if ((result === 'OK' && btn.classList.contains('pass')) || 
+                        (result === 'NG' && btn.classList.contains('fail'))) {
+                        btn.classList.add('selected');
+                    }
+                }
+            });
+            
+            // 전체 결과 업데이트
+            if (mvTrayResults[1] && mvTrayResults[2]) {
+                const overall = (mvTrayResults[1] === 'OK' && mvTrayResults[2] === 'OK') ? 'Pass' : 'Fail';
+                setMonthlyResult('mv-tray', overall);
             }
         }
         

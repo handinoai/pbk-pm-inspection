@@ -1110,18 +1110,19 @@
                 
                 <!-- 스펙 범위 시각화 -->
                 <div class="mt-6 p-4 bg-gray-50 rounded-lg">
-                    <div class="text-sm text-gray-600 mb-2">스펙 범위 (Torque: 12.32 ~ 16.67 lbf.in)</div>
+                    <div class="text-sm text-gray-600 mb-2">스펙 범위 (Torque: 12.32 ~ 16.67 lbf.in) · 경고 구간: 하위 5% / 상위 95%</div>
                     <div class="relative h-8 bg-gradient-to-r from-red-200 via-green-200 to-red-200 rounded-full">
-                        <div class="absolute left-0 top-0 h-full w-[10%] bg-red-300 rounded-l-full opacity-50"></div>
-                        <div class="absolute right-0 top-0 h-full w-[10%] bg-red-300 rounded-r-full opacity-50"></div>
-                        <div class="absolute left-[10%] top-1/2 transform -translate-y-1/2 text-xs text-gray-600">하한</div>
-                        <div class="absolute right-[10%] top-1/2 transform -translate-y-1/2 text-xs text-gray-600">상한</div>
+                        <div class="absolute left-0 top-0 h-full w-[5%] bg-red-400 rounded-l-full opacity-60"></div>
+                        <div class="absolute right-0 top-0 h-full w-[5%] bg-red-400 rounded-r-full opacity-60"></div>
+                        <div class="absolute left-[5%] top-1/2 transform -translate-y-1/2 text-[10px] text-red-600 font-medium">5%</div>
+                        <div class="absolute right-[5%] top-1/2 transform -translate-y-1/2 text-[10px] text-red-600 font-medium">95%</div>
                         <div class="absolute left-1/2 top-1/2 transform -translate-x-1/2 -translate-y-1/2 text-xs font-bold text-gray-700">14.5 (중앙)</div>
                     </div>
                     <div class="flex justify-between text-xs text-gray-500 mt-1">
                         <span>12.32</span>
                         <span>16.67</span>
                     </div>
+                    <div class="text-[10px] text-gray-400 mt-1">※ 5일 연속 경고 구간 진입 시 교체 알림 발생</div>
                 </div>
             </div>
             
@@ -1539,7 +1540,7 @@
                             <td class="py-3 px-4 text-center">
                                 <div class="flex items-center justify-center gap-2">
                                     <div class="w-24 h-2 bg-gray-200 rounded-full overflow-hidden">
-                                        <div class="h-full ${t.position_percent > 85 || t.position_percent < 15 ? 'bg-amber-500' : 'bg-green-500'}" style="width: ${t.position_percent}%"></div>
+                                        <div class="h-full ${t.position_percent > 95 || t.position_percent < 5 ? 'bg-red-500' : t.position_percent > 85 || t.position_percent < 15 ? 'bg-amber-500' : 'bg-green-500'}" style="width: ${t.position_percent}%"></div>
                                     </div>
                                     <span class="text-xs text-gray-500">${t.position_percent}%</span>
                                 </div>
@@ -2097,11 +2098,9 @@
                     if (data.success) {
                         console.log(`✅ ${data.record_type} 기록이 Google Sheets에 저장되었습니다.`);
                         
-                        // 트렌드 경고가 있으면 표시
+                        // 트렌드 경고는 콘솔에만 기록 (팝업 표시하지 않음 - 트렌드 탭에서 확인)
                         if (data.trend && data.trend.warning) {
-                            setTimeout(() => {
-                                alert(`⚠️ Tool ${data.trend.tool_id} 경고!\n\n${data.trend.warning}\n평균: ${data.trend.average} lbf.in\n\n${data.trend.recommendation || ''}`);
-                            }, 500);
+                            console.log(`⚠️ Tool ${data.trend.tool_id}: ${data.trend.warning} (평균: ${data.trend.average})`);
                         }
                     } else {
                         console.error(`❌ ${data.record_type} 저장 실패`);
@@ -2109,9 +2108,9 @@
                     break;
                     
                 case 'all_warnings':
-                    // 모든 Tool 경고
+                    // 모든 Tool 경고 - 팝업 대신 콘솔 로그만 (트렌드 탭 배너에서 확인)
                     if (data.warnings && data.warnings.length > 0) {
-                        showToolWarningsAlert(data.warnings);
+                        console.log('⚠️ 경고 Tool 목록:', data.warnings.map(w => `${w.tool_id}: ${w.warning}`).join(', '));
                     }
                     break;
                     

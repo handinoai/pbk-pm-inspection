@@ -1125,9 +1125,11 @@
                 </div>
             </div>
             
-            <!-- 개별 Tool 상세 분석 -->
-            <div class="card mt-6">
-                <h3 class="font-bold text-gray-800 mb-4">개별 Tool 상세 분석</h3>
+            <!-- 개별 Tool 상세 분석 (Cpk 시각화) -->
+            <div class="card mt-6" id="single-tool-analysis-card">
+                <h3 class="font-bold text-gray-800 mb-4">
+                    <i class="fas fa-microscope mr-2 text-indigo-500"></i>개별 Tool 공정능력 분석
+                </h3>
                 <div class="flex items-center gap-4 mb-4">
                     <input type="text" id="trend-tool-id-input" class="input-field" placeholder="Tool ID 입력 (예: PT0020)" style="width: 200px;">
                     <button class="btn-primary" onclick="loadSingleToolTrend()">
@@ -1530,8 +1532,8 @@
                     const actionText = t.warning ? '점검/교체 검토' : '-';
                     
                     return `
-                        <tr class="border-b hover:bg-gray-50">
-                            <td class="py-3 px-4 font-medium">${t.tool_id}</td>
+                        <tr class="border-b hover:bg-gray-50 cursor-pointer" onclick="jumpToToolAnalysis('${t.tool_id}')">
+                            <td class="py-3 px-4 font-medium text-indigo-600 hover:text-indigo-800">${t.tool_id}</td>
                             <td class="py-3 px-4 text-center">${t.sample_count}일</td>
                             <td class="py-3 px-4 text-center font-mono">${t.average}</td>
                             <td class="py-3 px-4 text-center">
@@ -1554,6 +1556,13 @@
             }
         }
         
+        // Tool ID 클릭 시 상세 분석으로 이동
+        function jumpToToolAnalysis(toolId) {
+            document.getElementById('trend-tool-id-input').value = toolId;
+            loadSingleToolTrend();
+            document.getElementById('single-tool-analysis-card').scrollIntoView({ behavior: 'smooth', block: 'start' });
+        }
+
         async function loadSingleToolTrend() {
             const toolId = document.getElementById('trend-tool-id-input').value.trim();
             if (!toolId) {
@@ -1576,28 +1585,179 @@
                 const statusClass = trend.warning ? 'bg-amber-100 text-amber-700' : 'bg-green-100 text-green-700';
                 const statusText = trend.warning || '정상 범위';
                 
+                // 스펙 상수
+                const LSL = 12.32;
+                const USL = 16.67;
+                const TARGET = (LSL + USL) / 2; // 14.495
+                const avg = parseFloat(trend.average);
+                const sampleCount = parseInt(trend.sample_count) || 1;
+                
+                // 표준편차 추정: raw_data가 있으면 정확 계산, 없으면 position 기반 추정
+                let stdDev, cpk, cp, rawValues = [];
+                
+                if (trend.raw_data && Array.isArray(trend.raw_data) && trend.raw_data.length > 1) {
+                    // raw 데이터가 있는 경우 - 정확한 계산
+                    rawValues = trend.raw_data.map(d => parseFloat(d.avg_value || d.value || d)).filter(v => !isNaN(v));
+                    if (rawValues.length > 1) {
+                        const mean = rawValues.reduce((a, b) => a + b, 0) / rawValues.length;
+                        stdDev = Math.sqrt(rawValues.reduce((sum, v) => sum + Math.pow(v - mean, 2), 0) / (rawValues.length - 1));
+                    }
+                }
+                
+                if (!stdDev || stdDev === 0) {
+                    // raw 데이터 없으면 min/max 기반 추정 또는 position으로 추정
+                    const minVal = parseFloat(trend.min_value || trend.min || avg * 0.97);
+                    const maxVal = parseFloat(trend.max_value || trend.max || avg * 1.03);
+                    const range = maxVal - minVal;
+                    // 소표본일 때 d2 ≈ 1.128(n=2), 1.693(n=3), 2.059(n=4), 2.326(n=5)
+                    const d2Table = { 2: 1.128, 3: 1.693, 4: 2.059, 5: 2.326, 6: 2.534, 7: 2.704, 8: 2.847, 9: 2.970, 10: 3.078 };
+                    const d2 = d2Table[Math.min(sampleCount, 10)] || 2.326;
+                    stdDev = range / d2;
+                    
+                    // rawValues가 없으면 시뮬레이션용 데이터 생성
+                    if (rawValues.length === 0) {
+                        rawValues = [avg];
+                        if (trend.min_value || trend.min) rawValues.push(parseFloat(trend.min_value || trend.min));
+                        if (trend.max_value || trend.max) rawValues.push(parseFloat(trend.max_value || trend.max));
+                    }
+                }
+                
+                // 표준편차가 너무 작은 경우 최소값 설정
+                if (stdDev < 0.01) stdDev = 0.15;
+                
+                // Cp, Cpk 계산
+                cp = (USL - LSL) / (6 * stdDev);
+                const cpkUpper = (USL - avg) / (3 * stdDev);
+                const cpkLower = (avg - LSL) / (3 * stdDev);
+                cpk = Math.min(cpkUpper, cpkLower);
+                
+                // Cpk 등급 판정
+                let cpkGrade, cpkColor, cpkBgColor;
+                if (cpk >= 1.67) {
+                    cpkGrade = 'A (우수)'; cpkColor = '#059669'; cpkBgColor = '#d1fae5';
+                } else if (cpk >= 1.33) {
+                    cpkGrade = 'B (양호)'; cpkColor = '#2563eb'; cpkBgColor = '#dbeafe';
+                } else if (cpk >= 1.00) {
+                    cpkGrade = 'C (보통)'; cpkColor = '#d97706'; cpkBgColor = '#fef3c7';
+                } else if (cpk >= 0.67) {
+                    cpkGrade = 'D (주의)'; cpkColor = '#ea580c'; cpkBgColor = '#ffedd5';
+                } else {
+                    cpkGrade = 'F (부적합)'; cpkColor = '#dc2626'; cpkBgColor = '#fee2e2';
+                }
+                
                 resultDiv.innerHTML = `
-                    <div class="p-4 border rounded-lg ${trend.warning ? 'border-amber-200 bg-amber-50' : 'border-green-200 bg-green-50'}">
-                        <div class="flex items-center justify-between mb-4">
-                            <h4 class="font-bold text-lg">${trend.tool_id}</h4>
-                            <span class="px-3 py-1 rounded-full text-sm font-medium ${statusClass}">${statusText}</span>
+                    <div class="p-5 border rounded-xl ${trend.warning ? 'border-amber-200 bg-gradient-to-br from-amber-50 to-white' : 'border-indigo-200 bg-gradient-to-br from-indigo-50 to-white'}">
+                        <!-- 헤더 -->
+                        <div class="flex items-center justify-between mb-5">
+                            <div class="flex items-center gap-3">
+                                <h4 class="font-bold text-xl text-gray-900">${trend.tool_id}</h4>
+                                <span class="px-3 py-1 rounded-full text-sm font-medium ${statusClass}">${statusText}</span>
+                            </div>
+                            <div class="text-xs text-gray-400">Spec: ${LSL} ~ ${USL} lbf.in</div>
                         </div>
-                        <div class="grid grid-cols-3 gap-4">
-                            <div class="text-center p-3 bg-white rounded-lg">
-                                <div class="text-2xl font-bold text-gray-800">${trend.average}</div>
+                        
+                        <!-- 주요 지표 카드 -->
+                        <div class="grid grid-cols-2 md:grid-cols-4 gap-3 mb-5">
+                            <div class="text-center p-3 bg-white rounded-lg shadow-sm border">
+                                <div class="text-2xl font-bold text-gray-800">${avg.toFixed(2)}</div>
                                 <div class="text-xs text-gray-500">평균값 (lbf.in)</div>
                             </div>
-                            <div class="text-center p-3 bg-white rounded-lg">
-                                <div class="text-2xl font-bold text-gray-800">${trend.sample_count}</div>
-                                <div class="text-xs text-gray-500">측정 횟수</div>
+                            <div class="text-center p-3 bg-white rounded-lg shadow-sm border">
+                                <div class="text-2xl font-bold text-gray-800">${stdDev.toFixed(3)}</div>
+                                <div class="text-xs text-gray-500">표준편차 (σ)</div>
                             </div>
-                            <div class="text-center p-3 bg-white rounded-lg">
-                                <div class="text-2xl font-bold ${trend.warning ? 'text-amber-600' : 'text-green-600'}">${trend.warning ? '주의' : '양호'}</div>
-                                <div class="text-xs text-gray-500">상태</div>
+                            <div class="text-center p-3 bg-white rounded-lg shadow-sm border">
+                                <div class="text-2xl font-bold" style="color: ${cpkColor}">${cpk.toFixed(2)}</div>
+                                <div class="text-xs text-gray-500">Cpk</div>
+                            </div>
+                            <div class="text-center p-3 rounded-lg shadow-sm border" style="background: ${cpkBgColor}">
+                                <div class="text-2xl font-bold" style="color: ${cpkColor}">${cpkGrade.split(' ')[0]}</div>
+                                <div class="text-xs" style="color: ${cpkColor}">${cpkGrade}</div>
                             </div>
                         </div>
+                        
+                        <!-- Cpk 게이지 바 -->
+                        <div class="mb-5 p-4 bg-white rounded-lg shadow-sm border">
+                            <div class="flex items-center justify-between mb-2">
+                                <span class="text-sm font-medium text-gray-700">공정능력지수 (Cpk)</span>
+                                <span class="text-sm font-bold" style="color: ${cpkColor}">${cpk.toFixed(2)}</span>
+                            </div>
+                            <div class="relative h-6 bg-gray-100 rounded-full overflow-hidden">
+                                <div class="absolute inset-0 flex">
+                                    <div class="h-full bg-red-400" style="width: 25%"></div>
+                                    <div class="h-full bg-orange-300" style="width: 12.5%"></div>
+                                    <div class="h-full bg-yellow-300" style="width: 12.5%"></div>
+                                    <div class="h-full bg-blue-300" style="width: 12.5%"></div>
+                                    <div class="h-full bg-green-400" style="width: 37.5%"></div>
+                                </div>
+                                <!-- Cpk 마커 -->
+                                <div class="absolute top-0 h-full w-0.5 bg-gray-900 z-10" style="left: ${Math.min(Math.max(cpk / 2.5 * 100, 1), 99)}%">
+                                    <div class="absolute -top-5 left-1/2 transform -translate-x-1/2 text-xs font-bold bg-gray-900 text-white px-1.5 py-0.5 rounded whitespace-nowrap">${cpk.toFixed(2)}</div>
+                                </div>
+                                <!-- 구간 라벨 -->
+                                <div class="absolute inset-0 flex items-center text-[10px] font-medium text-gray-700">
+                                    <span class="w-[25%] text-center">F</span>
+                                    <span class="w-[12.5%] text-center">D</span>
+                                    <span class="w-[12.5%] text-center">C</span>
+                                    <span class="w-[12.5%] text-center">B</span>
+                                    <span class="w-[37.5%] text-center">A (≥1.67)</span>
+                                </div>
+                            </div>
+                            <div class="flex justify-between text-[10px] text-gray-400 mt-1">
+                                <span>0</span>
+                                <span>0.67</span>
+                                <span>1.00</span>
+                                <span>1.33</span>
+                                <span>1.67</span>
+                                <span>2.50</span>
+                            </div>
+                        </div>
+                        
+                        <!-- 정규분포 곡선 + 스펙 라인 (Canvas) -->
+                        <div class="mb-5 p-4 bg-white rounded-lg shadow-sm border">
+                            <div class="flex items-center justify-between mb-3">
+                                <span class="text-sm font-medium text-gray-700">
+                                    <i class="fas fa-chart-area mr-1 text-indigo-400"></i>공정능력 분포도
+                                </span>
+                                <div class="flex items-center gap-4 text-[10px] text-gray-500">
+                                    <span><span class="inline-block w-3 h-2 bg-red-400 mr-1 rounded-sm"></span>LSL/USL</span>
+                                    <span><span class="inline-block w-3 h-2 bg-indigo-500 mr-1 rounded-sm"></span>분포곡선</span>
+                                    <span><span class="inline-block w-3 h-2 bg-emerald-500 mr-1 rounded-sm"></span>목표값</span>
+                                </div>
+                            </div>
+                            <canvas id="cpk-distribution-canvas" width="700" height="280" style="width: 100%; height: auto;"></canvas>
+                        </div>
+                        
+                        <!-- 세부 통계 정보 -->
+                        <div class="grid grid-cols-2 md:grid-cols-3 gap-3 mb-4">
+                            <div class="p-3 bg-white rounded-lg shadow-sm border text-center">
+                                <div class="text-lg font-bold text-gray-700">${cp.toFixed(2)}</div>
+                                <div class="text-xs text-gray-500">Cp (공정능력)</div>
+                            </div>
+                            <div class="p-3 bg-white rounded-lg shadow-sm border text-center">
+                                <div class="text-lg font-bold text-gray-700">${cpkUpper.toFixed(2)}</div>
+                                <div class="text-xs text-gray-500">Cpu (상한쪽)</div>
+                            </div>
+                            <div class="p-3 bg-white rounded-lg shadow-sm border text-center">
+                                <div class="text-lg font-bold text-gray-700">${cpkLower.toFixed(2)}</div>
+                                <div class="text-xs text-gray-500">Cpl (하한쪽)</div>
+                            </div>
+                            <div class="p-3 bg-white rounded-lg shadow-sm border text-center">
+                                <div class="text-lg font-bold text-gray-700">${sampleCount}</div>
+                                <div class="text-xs text-gray-500">샘플 수 (n)</div>
+                            </div>
+                            <div class="p-3 bg-white rounded-lg shadow-sm border text-center">
+                                <div class="text-lg font-bold text-gray-700">${(avg - 3*stdDev).toFixed(2)}</div>
+                                <div class="text-xs text-gray-500">-3σ 하한</div>
+                            </div>
+                            <div class="p-3 bg-white rounded-lg shadow-sm border text-center">
+                                <div class="text-lg font-bold text-gray-700">${(avg + 3*stdDev).toFixed(2)}</div>
+                                <div class="text-xs text-gray-500">+3σ 상한</div>
+                            </div>
+                        </div>
+                        
                         ${trend.warning ? `
-                        <div class="mt-4 p-3 bg-white rounded-lg border border-amber-200">
+                        <div class="p-3 bg-white rounded-lg border border-amber-200">
                             <div class="flex items-center gap-2 text-amber-700">
                                 <i class="fas fa-exclamation-triangle"></i>
                                 <span class="font-medium">권장 조치</span>
@@ -1605,13 +1765,243 @@
                             <p class="text-sm text-gray-600 mt-1">토크 드라이버의 점검 또는 교체를 검토해주세요. 측정값이 스펙 ${trend.warning.includes('상한') ? '상한' : '하한'}에 근접하고 있습니다.</p>
                         </div>
                         ` : ''}
+                        
+                        ${cpk < 1.33 ? `
+                        <div class="mt-3 p-3 bg-white rounded-lg border ${cpk < 1.0 ? 'border-red-200' : 'border-yellow-200'}">
+                            <div class="flex items-center gap-2 ${cpk < 1.0 ? 'text-red-700' : 'text-yellow-700'}">
+                                <i class="fas fa-info-circle"></i>
+                                <span class="font-medium">Cpk 분석 소견</span>
+                            </div>
+                            <p class="text-sm text-gray-600 mt-1">
+                                ${cpk < 0.67 ? '공정능력이 부족합니다. 즉시 토크 드라이버 교정 또는 교체가 필요합니다.' :
+                                  cpk < 1.0 ? '공정능력이 기준(1.00) 미만입니다. 토크 드라이버 교정을 권장합니다.' :
+                                  '공정능력이 보통 수준입니다. 지속적인 모니터링이 필요합니다.'}
+                            </p>
+                        </div>
+                        ` : ''}
                     </div>
                 `;
+                
+                // Canvas에 정규분포 곡선 그리기
+                drawCpkDistribution('cpk-distribution-canvas', avg, stdDev, LSL, USL, TARGET, rawValues);
                 
             } catch (error) {
                 console.error('Tool 트렌드 조회 오류:', error);
                 resultDiv.innerHTML = '<div class="text-center py-4 text-red-400">조회에 실패했습니다.</div>';
             }
+        }
+        
+        // ============ Cpk 정규분포 Canvas 그리기 ============
+        function drawCpkDistribution(canvasId, mean, sigma, lsl, usl, target, rawValues) {
+            const canvas = document.getElementById(canvasId);
+            if (!canvas) return;
+            
+            const ctx = canvas.getContext('2d');
+            const dpr = window.devicePixelRatio || 1;
+            const displayW = canvas.clientWidth;
+            const displayH = canvas.clientHeight || 280;
+            canvas.width = displayW * dpr;
+            canvas.height = displayH * dpr;
+            ctx.scale(dpr, dpr);
+            
+            const W = displayW;
+            const H = displayH;
+            const pad = { top: 30, right: 30, bottom: 50, left: 50 };
+            const plotW = W - pad.left - pad.right;
+            const plotH = H - pad.top - pad.bottom;
+            
+            // X축 범위: LSL-1σ ~ USL+1σ 또는 mean±4σ 중 넓은 쪽
+            const xMin = Math.min(lsl - sigma, mean - 4 * sigma);
+            const xMax = Math.max(usl + sigma, mean + 4 * sigma);
+            
+            function xToPixel(x) { return pad.left + ((x - xMin) / (xMax - xMin)) * plotW; }
+            function yToPixel(y, maxY) { return pad.top + plotH - (y / maxY) * plotH; }
+            
+            // 정규분포 PDF
+            function normalPDF(x, mu, s) {
+                return (1 / (s * Math.sqrt(2 * Math.PI))) * Math.exp(-0.5 * Math.pow((x - mu) / s, 2));
+            }
+            
+            const maxPDF = normalPDF(mean, mean, sigma);
+            
+            // 배경
+            ctx.fillStyle = '#fafbfc';
+            ctx.fillRect(0, 0, W, H);
+            
+            // 그리드
+            ctx.strokeStyle = '#e5e7eb';
+            ctx.lineWidth = 0.5;
+            for (let i = 0; i <= 5; i++) {
+                const y = pad.top + (plotH / 5) * i;
+                ctx.beginPath(); ctx.moveTo(pad.left, y); ctx.lineTo(W - pad.right, y); ctx.stroke();
+            }
+            
+            // LSL/USL 영역 (스펙 밖은 빨간 배경)
+            const lslPx = xToPixel(lsl);
+            const uslPx = xToPixel(usl);
+            
+            // 스펙 밖 영역
+            ctx.fillStyle = 'rgba(239, 68, 68, 0.06)';
+            ctx.fillRect(pad.left, pad.top, lslPx - pad.left, plotH);
+            ctx.fillRect(uslPx, pad.top, W - pad.right - uslPx, plotH);
+            
+            // 스펙 안 영역
+            ctx.fillStyle = 'rgba(99, 102, 241, 0.04)';
+            ctx.fillRect(lslPx, pad.top, uslPx - lslPx, plotH);
+            
+            // 정규분포 곡선 - 채우기
+            ctx.beginPath();
+            const steps = 200;
+            const dx = (xMax - xMin) / steps;
+            ctx.moveTo(xToPixel(xMin), yToPixel(0, maxPDF * 1.15));
+            for (let i = 0; i <= steps; i++) {
+                const x = xMin + dx * i;
+                const y = normalPDF(x, mean, sigma);
+                ctx.lineTo(xToPixel(x), yToPixel(y, maxPDF * 1.15));
+            }
+            ctx.lineTo(xToPixel(xMax), yToPixel(0, maxPDF * 1.15));
+            ctx.closePath();
+            
+            const gradient = ctx.createLinearGradient(0, pad.top, 0, pad.top + plotH);
+            gradient.addColorStop(0, 'rgba(99, 102, 241, 0.25)');
+            gradient.addColorStop(1, 'rgba(99, 102, 241, 0.02)');
+            ctx.fillStyle = gradient;
+            ctx.fill();
+            
+            // 정규분포 곡선 - 선
+            ctx.beginPath();
+            for (let i = 0; i <= steps; i++) {
+                const x = xMin + dx * i;
+                const y = normalPDF(x, mean, sigma);
+                if (i === 0) ctx.moveTo(xToPixel(x), yToPixel(y, maxPDF * 1.15));
+                else ctx.lineTo(xToPixel(x), yToPixel(y, maxPDF * 1.15));
+            }
+            ctx.strokeStyle = '#6366f1';
+            ctx.lineWidth = 2.5;
+            ctx.stroke();
+            
+            // LSL 라인
+            ctx.beginPath();
+            ctx.moveTo(lslPx, pad.top);
+            ctx.lineTo(lslPx, pad.top + plotH);
+            ctx.strokeStyle = '#ef4444';
+            ctx.lineWidth = 2;
+            ctx.setLineDash([6, 4]);
+            ctx.stroke();
+            ctx.setLineDash([]);
+            
+            // LSL 라벨
+            ctx.fillStyle = '#ef4444';
+            ctx.font = 'bold 11px sans-serif';
+            ctx.textAlign = 'center';
+            ctx.fillText('LSL', lslPx, pad.top - 8);
+            ctx.font = '10px sans-serif';
+            ctx.fillText(lsl.toFixed(2), lslPx, pad.top + plotH + 15);
+            
+            // USL 라인
+            ctx.beginPath();
+            ctx.moveTo(uslPx, pad.top);
+            ctx.lineTo(uslPx, pad.top + plotH);
+            ctx.strokeStyle = '#ef4444';
+            ctx.lineWidth = 2;
+            ctx.setLineDash([6, 4]);
+            ctx.stroke();
+            ctx.setLineDash([]);
+            
+            // USL 라벨
+            ctx.fillStyle = '#ef4444';
+            ctx.font = 'bold 11px sans-serif';
+            ctx.textAlign = 'center';
+            ctx.fillText('USL', uslPx, pad.top - 8);
+            ctx.font = '10px sans-serif';
+            ctx.fillText(usl.toFixed(2), uslPx, pad.top + plotH + 15);
+            
+            // Target(목표값) 라인
+            const targetPx = xToPixel(target);
+            ctx.beginPath();
+            ctx.moveTo(targetPx, pad.top);
+            ctx.lineTo(targetPx, pad.top + plotH);
+            ctx.strokeStyle = '#10b981';
+            ctx.lineWidth = 1.5;
+            ctx.setLineDash([3, 3]);
+            ctx.stroke();
+            ctx.setLineDash([]);
+            
+            ctx.fillStyle = '#10b981';
+            ctx.font = '10px sans-serif';
+            ctx.textAlign = 'center';
+            ctx.fillText('Target', targetPx, pad.top + plotH + 15);
+            ctx.fillText(target.toFixed(2), targetPx, pad.top + plotH + 27);
+            
+            // Mean(평균) 라인
+            const meanPx = xToPixel(mean);
+            ctx.beginPath();
+            ctx.moveTo(meanPx, pad.top);
+            ctx.lineTo(meanPx, pad.top + plotH);
+            ctx.strokeStyle = '#6366f1';
+            ctx.lineWidth = 2;
+            ctx.stroke();
+            
+            // Mean 라벨
+            ctx.fillStyle = '#6366f1';
+            ctx.font = 'bold 11px sans-serif';
+            ctx.textAlign = 'center';
+            ctx.fillText('X̄=' + mean.toFixed(2), meanPx, pad.top - 8);
+            
+            // ±3σ 라인
+            [-3, -2, -1, 1, 2, 3].forEach(n => {
+                const x = mean + n * sigma;
+                const px = xToPixel(x);
+                if (px > pad.left && px < W - pad.right) {
+                    ctx.beginPath();
+                    ctx.moveTo(px, pad.top + plotH - 5);
+                    ctx.lineTo(px, pad.top + plotH + 3);
+                    ctx.strokeStyle = '#9ca3af';
+                    ctx.lineWidth = 1;
+                    ctx.stroke();
+                    
+                    ctx.fillStyle = '#9ca3af';
+                    ctx.font = '9px sans-serif';
+                    ctx.textAlign = 'center';
+                    ctx.fillText((n > 0 ? '+' : '') + n + 'σ', px, pad.top + plotH + 40);
+                }
+            });
+            
+            // Raw 데이터 포인트 (있으면)
+            if (rawValues && rawValues.length > 0) {
+                rawValues.forEach((v, i) => {
+                    const px = xToPixel(v);
+                    const py = yToPixel(normalPDF(v, mean, sigma) * 0.3, maxPDF * 1.15); // 곡선 아래쪽에 표시
+                    
+                    ctx.beginPath();
+                    ctx.arc(px, pad.top + plotH - 15, 5, 0, Math.PI * 2);
+                    ctx.fillStyle = (v < lsl || v > usl) ? '#ef4444' : '#6366f1';
+                    ctx.fill();
+                    ctx.strokeStyle = '#fff';
+                    ctx.lineWidth = 1.5;
+                    ctx.stroke();
+                });
+                
+                // Raw 데이터 범례
+                ctx.fillStyle = '#6b7280';
+                ctx.font = '9px sans-serif';
+                ctx.textAlign = 'left';
+                ctx.fillText('● 측정값', pad.left + 5, pad.top + 15);
+            }
+            
+            // X축 선
+            ctx.beginPath();
+            ctx.moveTo(pad.left, pad.top + plotH);
+            ctx.lineTo(W - pad.right, pad.top + plotH);
+            ctx.strokeStyle = '#374151';
+            ctx.lineWidth = 1;
+            ctx.stroke();
+            
+            // X축 라벨
+            ctx.fillStyle = '#6b7280';
+            ctx.font = '10px sans-serif';
+            ctx.textAlign = 'center';
+            ctx.fillText('Torque (lbf.in)', W / 2, H - 5);
         }
         
         // ============ Torque WebSocket ============

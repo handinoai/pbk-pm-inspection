@@ -1469,6 +1469,79 @@
             return [];
         }
         
+        async function loadHipotRecordsFromSheets(fromDate, toDate) {
+            const result = await fetchFromSheets('daily_hipot', { from: fromDate, to: toDate });
+            if (result.success) {
+                return result.records;
+            }
+            return [];
+        }
+        
+        // Google Sheets 레코드를 localStorage 형식으로 변환 (호환성 유지)
+        function convertSheetsWorkerRecord(r) {
+            return {
+                date: r.date instanceof Date ? formatDateToLocal(new Date(r.date)) : String(r.date || '').slice(0, 10),
+                workerId: r.worker_id,
+                workerName: r.worker_name,
+                esd: r.esd_result || r.esd || '',
+                wrist: r.wrist_result || r.wrist || '',
+                tool_id: r.tool_id || '',
+                torque: {
+                    toolId: r.tool_id || '',
+                    values: [r.torque_1 || '', r.torque_2 || '', r.torque_3 || ''],
+                    result: r.torque_result || ''
+                },
+                torque_result: r.torque_result || '',
+                remarks: r.remarks || '',
+                createdAt: r.created_at || ''
+            };
+        }
+        
+        function convertSheetsHipotRecord(r) {
+            return {
+                date: r.date instanceof Date ? formatDateToLocal(new Date(r.date)) : String(r.date || '').slice(0, 10),
+                inspector: r.inspector || '',
+                passSample: r.pass_sample || '',
+                failSample: r.fail_sample || '',
+                overallResult: r.overall_result || r.overallResult || '',
+                remarks: r.remarks || '',
+                createdAt: r.created_at || ''
+            };
+        }
+        
+        // 통합 데이터 로드: Google Sheets 우선, 실패 시 localStorage fallback
+        async function loadDailyWorkerData(fromDate, toDate) {
+            try {
+                const sheetsRecords = await loadDailyRecordsFromSheets(fromDate, toDate);
+                if (sheetsRecords && sheetsRecords.length > 0) {
+                    return sheetsRecords.map(convertSheetsWorkerRecord);
+                }
+            } catch (e) {
+                console.warn('Google Sheets 조회 실패, localStorage fallback:', e);
+            }
+            // fallback: localStorage
+            return loadData(STORAGE_KEYS.dailyWorker).filter(r => {
+                const d = r.date || '';
+                return (!fromDate || d >= fromDate) && (!toDate || d <= toDate);
+            });
+        }
+        
+        async function loadDailyHipotData(fromDate, toDate) {
+            try {
+                const sheetsRecords = await loadHipotRecordsFromSheets(fromDate, toDate);
+                if (sheetsRecords && sheetsRecords.length > 0) {
+                    return sheetsRecords.map(convertSheetsHipotRecord);
+                }
+            } catch (e) {
+                console.warn('Google Sheets 조회 실패, localStorage fallback:', e);
+            }
+            // fallback: localStorage
+            return loadData(STORAGE_KEYS.dailyHipot).filter(r => {
+                const d = r.date || '';
+                return (!fromDate || d >= fromDate) && (!toDate || d <= toDate);
+            });
+        }
+        
         async function loadToolTrendFromSheets(toolId) {
             const result = await fetchFromSheets('tool_trend', { tool_id: toolId });
             if (result.success) {
@@ -2314,13 +2387,29 @@
         }
         
         // ============ Daily Worker Selection ============
-        function renderDailyWorkerSelection() {
+        async function renderDailyWorkerSelection() {
             const workers = loadWorkers();
             const container = document.getElementById('daily-worker-selection');
-            const todayRecords = loadData(STORAGE_KEYS.dailyWorker).filter(r => r.date === getLocalDateString());
+            const today = getLocalDateString();
             
+            // 먼저 localStorage로 빠르게 렌더링
+            const localRecords = loadData(STORAGE_KEYS.dailyWorker).filter(r => r.date === today);
+            renderWorkerCards(workers, container, localRecords);
+            
+            // Google Sheets에서도 가져와서 갱신 (다른 PC에서 저장한 데이터 반영)
+            try {
+                const sheetsRecords = await loadDailyWorkerData(today, today);
+                if (sheetsRecords && sheetsRecords.length > 0) {
+                    renderWorkerCards(workers, container, sheetsRecords);
+                }
+            } catch (e) {
+                console.warn('Google Sheets 오늘 데이터 조회 실패:', e);
+            }
+        }
+        
+        function renderWorkerCards(workers, container, todayRecords) {
             container.innerHTML = workers.map(worker => {
-                const completed = todayRecords.some(r => r.workerId === worker.id);
+                const completed = todayRecords.some(r => r.workerId === worker.id || r.worker_id === worker.id);
                 return `
                     <div class="worker-card ${selectedDailyWorker === worker.id ? 'selected' : ''}" onclick="selectDailyWorker(${worker.id})">
                         <div class="flex items-center gap-2">
@@ -2759,14 +2848,29 @@
         }
         
         // ============ Sidebar Status ============
-        function renderSidebarStatus() {
+        async function renderSidebarStatus() {
             const workers = loadWorkers();
             const today = getLocalDateString();
-            const todayRecords = loadData(STORAGE_KEYS.dailyWorker).filter(r => r.date === today);
             
+            // 먼저 localStorage로 빠르게 렌더링
+            const localRecords = loadData(STORAGE_KEYS.dailyWorker).filter(r => r.date === today);
+            renderSidebarCards(workers, localRecords);
+            
+            // Google Sheets에서도 가져와서 갱신
+            try {
+                const sheetsRecords = await loadDailyWorkerData(today, today);
+                if (sheetsRecords && sheetsRecords.length > 0) {
+                    renderSidebarCards(workers, sheetsRecords);
+                }
+            } catch (e) {
+                // localStorage 결과 유지
+            }
+        }
+        
+        function renderSidebarCards(workers, todayRecords) {
             const container = document.getElementById('sidebar-daily-status');
             container.innerHTML = workers.map(worker => {
-                const completed = todayRecords.some(r => r.workerId === worker.id);
+                const completed = todayRecords.some(r => r.workerId === worker.id || r.worker_id === worker.id);
                 return `
                     <div class="flex items-center gap-2">
                         <span class="${completed ? 'text-green-400' : 'text-gray-600'}">${completed ? '✅' : '⬜'}</span>
@@ -2783,14 +2887,18 @@
             event.currentTarget.classList.add('active');
         }
         
-        function loadHistory() {
+        async function loadHistory() {
             const from = document.getElementById('history-from').value;
             const to = document.getElementById('history-to').value;
             
+            const tbody = document.getElementById('history-table-body');
+            tbody.innerHTML = '<tr><td colspan="6" class="py-8 text-center text-gray-400"><i class="fas fa-spinner fa-spin mr-2"></i>조회 중...</td></tr>';
+            
             let data = [];
             if (currentHistoryType === 'daily') {
-                const workerData = loadData(STORAGE_KEYS.dailyWorker).filter(r => r.date >= from && r.date <= to);
-                const hipotData = loadData(STORAGE_KEYS.dailyHipot).filter(r => r.date >= from && r.date <= to);
+                // Google Sheets API에서 데이터 조회 (fallback: localStorage)
+                const workerData = await loadDailyWorkerData(from, to);
+                const hipotData = await loadDailyHipotData(from, to);
                 
                 workerData.forEach(r => {
                     data.push({
@@ -2875,20 +2983,24 @@
         }
         
         // ============ Reports ============
-        function loadReportStats() {
-            // Daily Pass율 계산
-            const dailyData = loadData(STORAGE_KEYS.dailyWorker);
-            const dailyPassCount = dailyData.filter(r => r.esd === 'Pass' && r.wrist === 'Pass' && (r.torque?.result === 'Pass' || r.torque_result === 'Pass')).length;
-            const dailyPassRate = dailyData.length > 0 ? Math.round(dailyPassCount / dailyData.length * 100) : 0;
-            document.getElementById('report-daily-pass-rate').textContent = dailyData.length > 0 ? dailyPassRate + '%' : '-';
+        async function loadReportStats() {
+            // Daily Pass율 계산 (Google Sheets에서 조회)
+            try {
+                const dailyData = await loadDailyWorkerData('', '');
+                const dailyPassCount = dailyData.filter(r => r.esd === 'Pass' && r.wrist === 'Pass' && (r.torque?.result === 'Pass' || r.torque_result === 'Pass')).length;
+                const dailyPassRate = dailyData.length > 0 ? Math.round(dailyPassCount / dailyData.length * 100) : 0;
+                document.getElementById('report-daily-pass-rate').textContent = dailyData.length > 0 ? dailyPassRate + '%' : '-';
+            } catch (e) {
+                document.getElementById('report-daily-pass-rate').textContent = '-';
+            }
             
-            // Monthly Pass율 계산
+            // Monthly Pass율 계산 (localStorage - 아직 Google Sheets 미연동)
             const monthlyData = loadData(STORAGE_KEYS.monthly);
             const monthlyPassCount = monthlyData.filter(r => r.overallResult === 'Pass').length;
             const monthlyPassRate = monthlyData.length > 0 ? Math.round(monthlyPassCount / monthlyData.length * 100) : 0;
             document.getElementById('report-monthly-pass-rate').textContent = monthlyData.length > 0 ? monthlyPassRate + '%' : '-';
             
-            // Bi-yearly Pass율 계산
+            // Bi-yearly Pass율 계산 (localStorage - 아직 Google Sheets 미연동)
             const biyearlyData = loadData(STORAGE_KEYS.biyearly);
             const biyearlyPassCount = biyearlyData.filter(r => r.overallResult === 'Pass').length;
             const biyearlyPassRate = biyearlyData.length > 0 ? Math.round(biyearlyPassCount / biyearlyData.length * 100) : 0;
@@ -2901,7 +3013,7 @@
             document.getElementById('report-to').value = getLocalDateString();
         }
         
-        function generateQMSReport(type) {
+        async function generateQMSReport(type) {
             const fromDate = document.getElementById('report-from').value;
             const toDate = document.getElementById('report-to').value;
             
@@ -2913,9 +3025,9 @@
             let reportHTML = '';
             
             if (type === 'daily-worker') {
-                reportHTML = generateDailyWorkerReport(fromDate, toDate);
+                reportHTML = await generateDailyWorkerReport(fromDate, toDate);
             } else if (type === 'daily-hipot') {
-                reportHTML = generateDailyHipotReport(fromDate, toDate);
+                reportHTML = await generateDailyHipotReport(fromDate, toDate);
             } else if (type === 'monthly') {
                 reportHTML = generateMonthlyReport(fromDate, toDate);
             } else if (type === 'biyearly') {
@@ -2987,8 +3099,8 @@
             `;
         }
         
-        function generateDailyWorkerReport(fromDate, toDate) {
-            const data = loadData(STORAGE_KEYS.dailyWorker).filter(r => r.date >= fromDate && r.date <= toDate);
+        async function generateDailyWorkerReport(fromDate, toDate) {
+            const data = await loadDailyWorkerData(fromDate, toDate);
             
             let tableRows = '';
             if (data.length === 0) {
@@ -3072,8 +3184,8 @@
             `;
         }
         
-        function generateDailyHipotReport(fromDate, toDate) {
-            const data = loadData(STORAGE_KEYS.dailyHipot).filter(r => r.date >= fromDate && r.date <= toDate);
+        async function generateDailyHipotReport(fromDate, toDate) {
+            const data = await loadDailyHipotData(fromDate, toDate);
             
             let tableRows = '';
             if (data.length === 0) {
@@ -3562,20 +3674,31 @@
         }
         
         // Hi-pot 금일 완료 여부 확인
-        function checkHipotTodayStatus() {
+        async function checkHipotTodayStatus() {
             const today = getLocalDateString();
-            const hipotData = loadData(STORAGE_KEYS.dailyHipot);
-            const todayRecord = hipotData.find(r => r.date === today);
-            
             const statusDiv = document.getElementById('hipot-today-status');
-            const hipotSection = document.getElementById('daily-item-hipot');
             
-            if (todayRecord) {
+            // 먼저 localStorage 확인
+            const localData = loadData(STORAGE_KEYS.dailyHipot);
+            const localRecord = localData.find(r => r.date === today);
+            
+            if (localRecord) {
                 statusDiv.classList.remove('hidden');
-                // 이미 완료된 경우 입력 비활성화 (선택적)
-            } else {
-                statusDiv.classList.add('hidden');
+                return;
             }
+            
+            // Google Sheets에서도 확인
+            try {
+                const sheetsData = await loadDailyHipotData(today, today);
+                if (sheetsData && sheetsData.length > 0) {
+                    statusDiv.classList.remove('hidden');
+                    return;
+                }
+            } catch (e) {
+                // localStorage 결과 유지
+            }
+            
+            statusDiv.classList.add('hidden');
         }
         
         // Machine Vision Fixture 체크 (3대)

@@ -1542,6 +1542,97 @@
             });
         }
         
+        // ============ Monthly Google Sheets 연동 ============
+        async function loadMonthlyRecordsFromSheets(fromDate, toDate) {
+            const result = await fetchFromSheets('monthly', { from: fromDate || '', to: toDate || '' });
+            if (result.success) {
+                return result.records;
+            }
+            return [];
+        }
+        
+        function convertSheetsMonthlyRecord(r) {
+            return {
+                period: String(r.period || ''),
+                inspector: r.inspector || '',
+                loadPassValue: r.load_pass_value || '',
+                loadPassResult: r.load_pass_result || '',
+                loadFailValue: r.load_fail_value || '',
+                loadFailResult: r.load_fail_result || '',
+                glovesOpenDate: r.gloves_open_date || '',
+                glovesExpiry: r.gloves_expiry || '',
+                glovesResult: r.gloves_result || '',
+                mvFixtures: [
+                    { num: 1, check1: r.mv_fixture1_check1 || '', check2: r.mv_fixture1_check2 || '', result: r.mv_fixture1_result || '' },
+                    { num: 2, check1: r.mv_fixture2_check1 || '', check2: r.mv_fixture2_check2 || '', result: r.mv_fixture2_result || '' },
+                    { num: 3, check1: r.mv_fixture3_check1 || '', check2: r.mv_fixture3_check2 || '', result: r.mv_fixture3_result || '' }
+                ],
+                mvFixtureRemarks: r.mv_fixture_remarks || '',
+                mvTraySerial: r.mv_tray_serial || '',
+                mvTrayCheck1: r.mv_tray_check1 || '',
+                mvTrayCheck2: r.mv_tray_check2 || '',
+                mvTrayResult: r.mv_tray_result || '',
+                mvTrayRemarks: r.mv_tray_remarks || '',
+                overallResult: r.overall_result || '',
+                remarks: r.remarks || '',
+                createdAt: r.created_at || ''
+            };
+        }
+        
+        async function loadMonthlyData(fromDate, toDate) {
+            try {
+                const sheetsRecords = await loadMonthlyRecordsFromSheets(fromDate, toDate);
+                if (sheetsRecords && sheetsRecords.length > 0) {
+                    return sheetsRecords.map(convertSheetsMonthlyRecord);
+                }
+            } catch (e) {
+                console.warn('Monthly Google Sheets 조회 실패, localStorage fallback:', e);
+            }
+            // fallback: localStorage
+            return loadData(STORAGE_KEYS.monthly);
+        }
+        
+        async function saveMonthlyToSheets(record) {
+            // JSONP로 저장 (GET 파라미터로 전달)
+            try {
+                const params = {
+                    period: record.period || '',
+                    inspector: record.inspector || '',
+                    load_pass_value: record.loadPassValue || '',
+                    load_pass_result: record.loadPassResult || '',
+                    load_fail_value: record.loadFailValue || '',
+                    load_fail_result: record.loadFailResult || '',
+                    gloves_open_date: record.glovesOpenDate || '',
+                    gloves_expiry: record.glovesExpiry || '',
+                    gloves_result: record.glovesResult || '',
+                    mv_fixture1_check1: record.mvFixtures?.[0]?.check1 || '',
+                    mv_fixture1_check2: record.mvFixtures?.[0]?.check2 || '',
+                    mv_fixture1_result: record.mvFixtures?.[0]?.result || '',
+                    mv_fixture2_check1: record.mvFixtures?.[1]?.check1 || '',
+                    mv_fixture2_check2: record.mvFixtures?.[1]?.check2 || '',
+                    mv_fixture2_result: record.mvFixtures?.[1]?.result || '',
+                    mv_fixture3_check1: record.mvFixtures?.[2]?.check1 || '',
+                    mv_fixture3_check2: record.mvFixtures?.[2]?.check2 || '',
+                    mv_fixture3_result: record.mvFixtures?.[2]?.result || '',
+                    mv_fixture_remarks: record.mvFixtureRemarks || '',
+                    mv_tray_serial: record.mvTraySerial || '',
+                    mv_tray_check1: record.mvTrayCheck1 || '',
+                    mv_tray_check2: record.mvTrayCheck2 || '',
+                    mv_tray_result: record.mvTrayResult || '',
+                    mv_tray_remarks: record.mvTrayRemarks || '',
+                    overall_result: record.overallResult || '',
+                    remarks: record.remarks || '',
+                    created_at: record.createdAt || ''
+                };
+                const result = await fetchFromSheets('save_monthly', params);
+                console.log('Monthly Google Sheets 저장:', result.success ? '✅ 성공' : '❌ 실패');
+                return result.success;
+            } catch (e) {
+                console.warn('Monthly Google Sheets 저장 실패:', e);
+                return false;
+            }
+        }
+        
         async function loadToolTrendFromSheets(toolId) {
             const result = await fetchFromSheets('tool_trend', { tool_id: toolId });
             if (result.success) {
@@ -2777,6 +2868,9 @@
             }
             saveData(STORAGE_KEYS.monthly, data);
             
+            // Google Sheets에도 저장
+            saveMonthlyToSheets(record);
+            
             alert(`${period} Monthly 점검이 저장되었습니다.`);
             loadReportStats();
         }
@@ -2922,7 +3016,7 @@
                     });
                 });
             } else if (currentHistoryType === 'monthly') {
-                const monthlyData = loadData(STORAGE_KEYS.monthly);
+                const monthlyData = await loadMonthlyData(from, to);
                 // period(YYYY-MM) 기준으로 필터링
                 const fromMonth = from.slice(0, 7);
                 const toMonth = to.slice(0, 7);
@@ -2994,11 +3088,15 @@
                 document.getElementById('report-daily-pass-rate').textContent = '-';
             }
             
-            // Monthly Pass율 계산 (localStorage - 아직 Google Sheets 미연동)
-            const monthlyData = loadData(STORAGE_KEYS.monthly);
-            const monthlyPassCount = monthlyData.filter(r => r.overallResult === 'Pass').length;
-            const monthlyPassRate = monthlyData.length > 0 ? Math.round(monthlyPassCount / monthlyData.length * 100) : 0;
-            document.getElementById('report-monthly-pass-rate').textContent = monthlyData.length > 0 ? monthlyPassRate + '%' : '-';
+            // Monthly Pass율 계산 (Google Sheets)
+            try {
+                const monthlyData = await loadMonthlyData('', '');
+                const monthlyPassCount = monthlyData.filter(r => r.overallResult === 'Pass').length;
+                const monthlyPassRate = monthlyData.length > 0 ? Math.round(monthlyPassCount / monthlyData.length * 100) : 0;
+                document.getElementById('report-monthly-pass-rate').textContent = monthlyData.length > 0 ? monthlyPassRate + '%' : '-';
+            } catch (e) {
+                document.getElementById('report-monthly-pass-rate').textContent = '-';
+            }
             
             // Bi-yearly Pass율 계산 (localStorage - 아직 Google Sheets 미연동)
             const biyearlyData = loadData(STORAGE_KEYS.biyearly);
@@ -3029,7 +3127,7 @@
             } else if (type === 'daily-hipot') {
                 reportHTML = await generateDailyHipotReport(fromDate, toDate);
             } else if (type === 'monthly') {
-                reportHTML = generateMonthlyReport(fromDate, toDate);
+                reportHTML = await generateMonthlyReport(fromDate, toDate);
             } else if (type === 'biyearly') {
                 reportHTML = generateBiyearlyReport(fromDate, toDate);
             }
@@ -3274,9 +3372,10 @@
             `;
         }
         
-        function generateMonthlyReport(fromDate, toDate) {
-            const data = loadData(STORAGE_KEYS.monthly).filter(r => {
-                const recordDate = r.period + '-01';
+        async function generateMonthlyReport(fromDate, toDate) {
+            const allData = await loadMonthlyData(fromDate, toDate);
+            const data = allData.filter(r => {
+                const recordDate = (r.period || '') + '-01';
                 return recordDate >= fromDate && recordDate <= toDate;
             });
             

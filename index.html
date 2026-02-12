@@ -1692,6 +1692,86 @@
             }
         }
         
+        // ============ Bi-yearly Google Sheets 연동 ============
+        async function loadBiyearlyRecordsFromSheets(fromDate, toDate) {
+            console.log('📡 Biyearly API 호출:', { from: fromDate, to: toDate });
+            const result = await fetchFromSheets('biyearly', { from: fromDate || '', to: toDate || '' });
+            console.log('📡 Biyearly API 응답:', result);
+            if (result.success) {
+                return result.records || [];
+            }
+            return [];
+        }
+        
+        function convertSheetsBiyearlyRecord(r) {
+            const measurements = {};
+            for (let i = 1; i <= 5; i++) {
+                measurements['surface_' + i] = {
+                    workerId: r['surface_' + i + '_id'] || '',
+                    value: r['surface_' + i + '_value'] || '',
+                    result: r['surface_' + i + '_result'] || null
+                };
+                measurements['wrist_' + i] = {
+                    workerId: r['wrist_' + i + '_id'] || '',
+                    value: r['wrist_' + i + '_value'] || '',
+                    result: r['wrist_' + i + '_result'] || null
+                };
+            }
+            return {
+                period: String(r.period || ''),
+                inspector: r.inspector || '',
+                measurements: measurements,
+                overallResult: r.overall_result || '',
+                remarks: r.remarks || '',
+                createdAt: r.created_at || ''
+            };
+        }
+        
+        async function loadBiyearlyData(fromDate, toDate) {
+            try {
+                const sheetsRecords = await loadBiyearlyRecordsFromSheets(fromDate, toDate);
+                if (sheetsRecords) {
+                    const converted = sheetsRecords.map(convertSheetsBiyearlyRecord);
+                    console.log('Biyearly Sheets 조회 결과:', converted.length, '건');
+                    return converted;
+                }
+            } catch (e) {
+                console.warn('Biyearly Google Sheets 조회 실패, localStorage fallback:', e);
+            }
+            return loadData(STORAGE_KEYS.biyearly);
+        }
+        
+        async function saveBiyearlyToSheets(record) {
+            try {
+                const m = record.measurements || {};
+                const params = {
+                    period: record.period || '',
+                    inspector: record.inspector || ''
+                };
+                // surface_1~5, wrist_1~5 플랫하게 변환
+                for (let i = 1; i <= 5; i++) {
+                    const s = m['surface_' + i] || {};
+                    params['surface_' + i + '_id'] = s.workerId || '';
+                    params['surface_' + i + '_value'] = s.value || '';
+                    params['surface_' + i + '_result'] = s.result || '';
+                    const w = m['wrist_' + i] || {};
+                    params['wrist_' + i + '_id'] = w.workerId || '';
+                    params['wrist_' + i + '_value'] = w.value || '';
+                    params['wrist_' + i + '_result'] = w.result || '';
+                }
+                params.overall_result = record.overallResult || '';
+                params.remarks = record.remarks || '';
+                params.created_at = record.createdAt || '';
+                
+                const result = await fetchFromSheets('save_biyearly', params);
+                console.log('Biyearly Google Sheets 저장:', result.success ? '✅ 성공' : '❌ 실패');
+                return result.success;
+            } catch (e) {
+                console.warn('Biyearly Google Sheets 저장 실패:', e);
+                return false;
+            }
+        }
+        
         async function loadToolTrendFromSheets(toolId) {
             const result = await fetchFromSheets('tool_trend', { tool_id: toolId });
             if (result.success) {
@@ -3029,6 +3109,9 @@
             }
             saveData(STORAGE_KEYS.biyearly, data);
             
+            // Google Sheets에도 저장
+            saveBiyearlyToSheets(record);
+            
             alert(`${period} Bi-yearly 점검이 저장되었습니다.\n종합 판정: ${overallResult}`);
         }
         
@@ -3130,13 +3213,13 @@
                     });
                 });
             } else if (currentHistoryType === 'biyearly') {
-                const biyearlyData = loadData(STORAGE_KEYS.biyearly);
+                const biyearlyData = await loadBiyearlyData(from, to);
                 // period(YYYY-H1/H2) 기준으로 필터링
                 const fromYear = from.slice(0, 4);
                 const toYear = to.slice(0, 4);
                 
                 biyearlyData.filter(r => {
-                    const year = r.period.slice(0, 4);
+                    const year = (r.period || '').slice(0, 4);
                     return year >= fromYear && year <= toYear;
                 }).forEach(r => {
                     data.push({
@@ -3189,11 +3272,15 @@
                 document.getElementById('report-monthly-pass-rate').textContent = '-';
             }
             
-            // Bi-yearly Pass율 계산 (localStorage - 아직 Google Sheets 미연동)
-            const biyearlyData = loadData(STORAGE_KEYS.biyearly);
-            const biyearlyPassCount = biyearlyData.filter(r => r.overallResult === 'Pass').length;
-            const biyearlyPassRate = biyearlyData.length > 0 ? Math.round(biyearlyPassCount / biyearlyData.length * 100) : 0;
-            document.getElementById('report-biyearly-pass-rate').textContent = biyearlyData.length > 0 ? biyearlyPassRate + '%' : '-';
+            // Bi-yearly Pass율 계산 (Google Sheets)
+            try {
+                const biyearlyData = await loadBiyearlyData('', '');
+                const biyearlyPassCount = biyearlyData.filter(r => r.overallResult === 'Pass').length;
+                const biyearlyPassRate = biyearlyData.length > 0 ? Math.round(biyearlyPassCount / biyearlyData.length * 100) : 0;
+                document.getElementById('report-biyearly-pass-rate').textContent = biyearlyData.length > 0 ? biyearlyPassRate + '%' : '-';
+            } catch (e) {
+                document.getElementById('report-biyearly-pass-rate').textContent = '-';
+            }
             
             // 보고서 날짜 기본값 설정
             const today = new Date();
@@ -3220,7 +3307,7 @@
             } else if (type === 'monthly') {
                 reportHTML = await generateMonthlyReport(fromDate, toDate);
             } else if (type === 'biyearly') {
-                reportHTML = generateBiyearlyReport(fromDate, toDate);
+                reportHTML = await generateBiyearlyReport(fromDate, toDate);
             }
             
             // 새 창에서 출력
@@ -3570,8 +3657,8 @@
             `;
         }
         
-        function generateBiyearlyReport(fromDate, toDate) {
-            const data = loadData(STORAGE_KEYS.biyearly);
+        async function generateBiyearlyReport(fromDate, toDate) {
+            const data = await loadBiyearlyData(fromDate, toDate);
             
             let reportContent = '';
             if (data.length === 0) {

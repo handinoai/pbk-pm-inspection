@@ -1511,70 +1511,47 @@
         
         // 통합 데이터 로드: Google Sheets 우선, 실패 시 localStorage fallback
         async function loadDailyWorkerData(fromDate, toDate) {
-            // Google Sheets와 localStorage 데이터를 병합
-            let sheetsData = [];
+            // Google Sheets에서 조회 (API 실패 시에만 localStorage fallback)
             try {
                 const sheetsRecords = await loadDailyRecordsFromSheets(fromDate, toDate);
-                if (sheetsRecords && sheetsRecords.length > 0) {
-                    sheetsData = sheetsRecords.map(convertSheetsWorkerRecord);
+                if (sheetsRecords) {
+                    return sheetsRecords.map(convertSheetsWorkerRecord);
                 }
             } catch (e) {
-                console.warn('Google Sheets 조회 실패:', e);
+                console.warn('Daily Worker Google Sheets 조회 실패, localStorage fallback:', e);
             }
-            
-            const localData = loadData(STORAGE_KEYS.dailyWorker).filter(r => {
+            return loadData(STORAGE_KEYS.dailyWorker).filter(r => {
                 const d = r.date || '';
                 return (!fromDate || d >= fromDate) && (!toDate || d <= toDate);
             });
-            
-            // 병합: Sheets 우선, date+workerId 기준 중복 제거
-            const merged = [...sheetsData];
-            const sheetsKeys = new Set(sheetsData.map(r => `${r.date}_${r.workerId || r.worker_id}`));
-            localData.forEach(r => {
-                const key = `${r.date}_${r.workerId || r.worker_id}`;
-                if (!sheetsKeys.has(key)) {
-                    merged.push(r);
-                }
-            });
-            
-            return merged;
         }
         
         async function loadDailyHipotData(fromDate, toDate) {
-            // Google Sheets와 localStorage 데이터를 병합
-            let sheetsData = [];
+            // Google Sheets에서 조회 (API 실패 시에만 localStorage fallback)
             try {
                 const sheetsRecords = await loadHipotRecordsFromSheets(fromDate, toDate);
-                if (sheetsRecords && sheetsRecords.length > 0) {
-                    sheetsData = sheetsRecords.map(convertSheetsHipotRecord);
+                if (sheetsRecords) {
+                    return sheetsRecords.map(convertSheetsHipotRecord);
                 }
             } catch (e) {
-                console.warn('Google Sheets 조회 실패:', e);
+                console.warn('Daily Hipot Google Sheets 조회 실패, localStorage fallback:', e);
             }
-            
-            const localData = loadData(STORAGE_KEYS.dailyHipot).filter(r => {
+            return loadData(STORAGE_KEYS.dailyHipot).filter(r => {
                 const d = r.date || '';
                 return (!fromDate || d >= fromDate) && (!toDate || d <= toDate);
             });
-            
-            // 병합: Sheets 우선, date 기준 중복 제거
-            const merged = [...sheetsData];
-            const sheetsDates = new Set(sheetsData.map(r => r.date));
-            localData.forEach(r => {
-                if (!sheetsDates.has(r.date)) {
-                    merged.push(r);
-                }
-            });
-            
-            return merged;
         }
         
         // ============ Monthly Google Sheets 연동 ============
         async function loadMonthlyRecordsFromSheets(fromDate, toDate) {
+            console.log('📡 Monthly API 호출:', { from: fromDate, to: toDate });
             const result = await fetchFromSheets('monthly', { from: fromDate || '', to: toDate || '' });
+            console.log('📡 Monthly API 응답:', result);
             if (result.success) {
-                return result.records;
+                console.log('📡 Monthly 레코드 수:', result.records ? result.records.length : 0);
+                return result.records || [];
             }
+            console.warn('📡 Monthly API 실패:', result.error);
             return [];
         }
         
@@ -1607,36 +1584,26 @@
         }
         
         async function loadMonthlyData(fromDate, toDate) {
-            // Google Sheets와 localStorage 데이터를 병합 (period 기준 중복 제거)
-            let sheetsData = [];
+            // Google Sheets에서 조회 (API 실패 시에만 localStorage fallback)
             try {
                 const sheetsRecords = await loadMonthlyRecordsFromSheets(fromDate, toDate);
-                if (sheetsRecords && sheetsRecords.length > 0) {
-                    sheetsData = sheetsRecords.map(convertSheetsMonthlyRecord);
+                if (sheetsRecords) {
+                    const converted = sheetsRecords.map(convertSheetsMonthlyRecord);
+                    console.log('Monthly Sheets 조회 결과:', converted.length, '건');
+                    return converted;
                 }
             } catch (e) {
-                console.warn('Monthly Google Sheets 조회 실패:', e);
+                console.warn('Monthly Google Sheets 조회 실패, localStorage fallback:', e);
             }
-            
-            // localStorage 데이터도 가져오기
+            // API 실패 시에만 localStorage 사용
             const localData = loadData(STORAGE_KEYS.monthly).filter(r => {
                 const p = r.period || '';
                 const fromMonth = fromDate ? fromDate.slice(0, 7) : '';
                 const toMonth = toDate ? toDate.slice(0, 7) : '';
                 return (!fromMonth || p >= fromMonth) && (!toMonth || p <= toMonth);
             });
-            
-            // 병합: Google Sheets 데이터 우선, localStorage에만 있는 건 추가
-            const merged = [...sheetsData];
-            const sheetsPeriods = new Set(sheetsData.map(r => r.period));
-            
-            localData.forEach(r => {
-                if (!sheetsPeriods.has(r.period)) {
-                    merged.push(r);
-                }
-            });
-            
-            return merged;
+            console.log('Monthly localStorage fallback:', localData.length, '건');
+            return localData;
         }
         
         async function saveMonthlyToSheets(record) {

@@ -925,85 +925,105 @@
                         측정 방법: GND Connected → OK / Not Connected → NG
                     </div>
                     
-                    <!-- 접지 대상 테이블 -->
-                    <table class="w-full">
-                        <thead>
-                            <tr class="border-b bg-gray-50">
-                                <th class="text-left py-3 px-4 text-xs font-semibold text-gray-500 uppercase">접지 대상</th>
-                                <th class="text-center py-3 px-4 text-xs font-semibold text-gray-500 uppercase">Spec (접지간 전기저항)</th>
-                                <th class="text-center py-3 px-4 text-xs font-semibold text-gray-500 uppercase">측정값</th>
-                                <th class="text-center py-3 px-4 text-xs font-semibold text-gray-500 uppercase">판정</th>
-                            </tr>
-                        </thead>
-                        <tbody id="esd-table-body">
-                            <tr class="table-row border-b">
-                                <td class="py-3 px-4 font-medium">제조설비</td>
-                                <td class="py-3 px-4 text-center"><span class="spec-badge">≤ 1000 kΩ</span></td>
-                                <td class="py-3 px-4 text-center"><input type="text" class="input-field input-sm esd-value" data-item="equipment" placeholder="측정값"></td>
-                                <td class="py-3 px-4 text-center">
-                                    <div class="flex gap-1 justify-center">
-                                        <button class="check-btn pass text-xs px-3 py-1" onclick="setEsdResult('equipment', 'Pass')">OK</button>
-                                        <button class="check-btn fail text-xs px-3 py-1" onclick="setEsdResult('equipment', 'Fail')">NG</button>
-                                    </div>
-                                </td>
-                            </tr>
-                            <tr class="table-row border-b">
-                                <td class="py-3 px-4 font-medium">작업 의자 및 이동 대차</td>
-                                <td class="py-3 px-4 text-center"><span class="spec-badge">≤ 1000 kΩ</span></td>
-                                <td class="py-3 px-4 text-center"><input type="text" class="input-field input-sm esd-value" data-item="chair" placeholder="측정값"></td>
-                                <td class="py-3 px-4 text-center">
-                                    <div class="flex gap-1 justify-center">
-                                        <button class="check-btn pass text-xs px-3 py-1" onclick="setEsdResult('chair', 'Pass')">OK</button>
-                                        <button class="check-btn fail text-xs px-3 py-1" onclick="setEsdResult('chair', 'Fail')">NG</button>
-                                    </div>
-                                </td>
-                            </tr>
-                            <tr class="table-row border-b">
-                                <td class="py-3 px-4 font-medium">작업대 표면</td>
-                                <td class="py-3 px-4 text-center"><span class="spec-badge">1Ω ~ 1GΩ</span></td>
-                                <td class="py-3 px-4 text-center"><input type="text" class="input-field input-sm esd-value" data-item="surface" placeholder="측정값"></td>
-                                <td class="py-3 px-4 text-center">
-                                    <div class="flex gap-1 justify-center">
-                                        <button class="check-btn pass text-xs px-3 py-1" onclick="setEsdResult('surface', 'Pass')">OK</button>
-                                        <button class="check-btn fail text-xs px-3 py-1" onclick="setEsdResult('surface', 'Fail')">NG</button>
-                                    </div>
-                                </td>
-                            </tr>
-                            <tr class="table-row border-b">
-                                <td class="py-3 px-4 font-medium">작업자용 손목띠</td>
-                                <td class="py-3 px-4 text-center"><span class="spec-badge">1MΩ ± 10%</span></td>
-                                <td class="py-3 px-4 text-center"><input type="text" class="input-field input-sm esd-value" data-item="wristband" placeholder="측정값"></td>
-                                <td class="py-3 px-4 text-center">
-                                    <div class="flex gap-1 justify-center">
-                                        <button class="check-btn pass text-xs px-3 py-1" onclick="setEsdResult('wristband', 'Pass')">OK</button>
-                                        <button class="check-btn fail text-xs px-3 py-1" onclick="setEsdResult('wristband', 'Fail')">NG</button>
-                                    </div>
-                                </td>
-                            </tr>
-                            <tr class="table-row border-b">
-                                <td class="py-3 px-4 font-medium">바닥 TILE (바닥재)</td>
-                                <td class="py-3 px-4 text-center"><span class="spec-badge">1MΩ ~ 100GΩ</span></td>
-                                <td class="py-3 px-4 text-center"><input type="text" class="input-field input-sm esd-value" data-item="floor" placeholder="측정값"></td>
-                                <td class="py-3 px-4 text-center">
-                                    <div class="flex gap-1 justify-center">
-                                        <button class="check-btn pass text-xs px-3 py-1" onclick="setEsdResult('floor', 'Pass')">OK</button>
-                                        <button class="check-btn fail text-xs px-3 py-1" onclick="setEsdResult('floor', 'Fail')">NG</button>
-                                    </div>
-                                </td>
-                            </tr>
-                            <tr class="table-row border-b">
-                                <td class="py-3 px-4 font-medium">도전성 MAT</td>
-                                <td class="py-3 px-4 text-center"><span class="spec-badge">1MΩ ~ 100MΩ</span></td>
-                                <td class="py-3 px-4 text-center"><input type="text" class="input-field input-sm esd-value" data-item="mat" placeholder="측정값"></td>
-                                <td class="py-3 px-4 text-center">
-                                    <div class="flex gap-1 justify-center">
-                                        <button class="check-btn pass text-xs px-3 py-1" onclick="setEsdResult('mat', 'Pass')">OK</button>
-                                        <button class="check-btn fail text-xs px-3 py-1" onclick="setEsdResult('mat', 'Fail')">NG</button>
-                                    </div>
-                                </td>
-                            </tr>
-                        </tbody>
-                    </table>
+                    <!-- 작업대 표면 (5개) -->
+                    <div class="mb-6">
+                        <div class="flex items-center gap-2 mb-3">
+                            <span class="text-sm font-bold text-gray-800">① 작업대 표면</span>
+                            <span class="spec-badge">Spec: 1Ω ~ 1GΩ</span>
+                        </div>
+                        <table class="w-full">
+                            <thead>
+                                <tr class="border-b bg-gray-50">
+                                    <th class="text-center py-2 px-3 text-xs font-semibold text-gray-500 w-16">#</th>
+                                    <th class="text-center py-2 px-3 text-xs font-semibold text-gray-500">작업자 ID</th>
+                                    <th class="text-center py-2 px-3 text-xs font-semibold text-gray-500">측정값</th>
+                                    <th class="text-center py-2 px-3 text-xs font-semibold text-gray-500 w-32">판정</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <tr class="table-row border-b">
+                                    <td class="py-2 px-3 text-center text-sm text-gray-500">1</td>
+                                    <td class="py-2 px-3 text-center"><input type="text" class="input-field input-sm esd-id" data-item="surface_1" value="Z01" style="width:80px; text-align:center;"></td>
+                                    <td class="py-2 px-3 text-center"><input type="text" class="input-field input-sm esd-value" data-item="surface_1" placeholder="측정값"></td>
+                                    <td class="py-2 px-3 text-center"><div class="flex gap-1 justify-center"><button class="check-btn pass text-xs px-3 py-1" onclick="setEsdResult('surface_1', 'Pass')">OK</button><button class="check-btn fail text-xs px-3 py-1" onclick="setEsdResult('surface_1', 'Fail')">NG</button></div></td>
+                                </tr>
+                                <tr class="table-row border-b">
+                                    <td class="py-2 px-3 text-center text-sm text-gray-500">2</td>
+                                    <td class="py-2 px-3 text-center"><input type="text" class="input-field input-sm esd-id" data-item="surface_2" value="Z02" style="width:80px; text-align:center;"></td>
+                                    <td class="py-2 px-3 text-center"><input type="text" class="input-field input-sm esd-value" data-item="surface_2" placeholder="측정값"></td>
+                                    <td class="py-2 px-3 text-center"><div class="flex gap-1 justify-center"><button class="check-btn pass text-xs px-3 py-1" onclick="setEsdResult('surface_2', 'Pass')">OK</button><button class="check-btn fail text-xs px-3 py-1" onclick="setEsdResult('surface_2', 'Fail')">NG</button></div></td>
+                                </tr>
+                                <tr class="table-row border-b">
+                                    <td class="py-2 px-3 text-center text-sm text-gray-500">3</td>
+                                    <td class="py-2 px-3 text-center"><input type="text" class="input-field input-sm esd-id" data-item="surface_3" value="Z03" style="width:80px; text-align:center;"></td>
+                                    <td class="py-2 px-3 text-center"><input type="text" class="input-field input-sm esd-value" data-item="surface_3" placeholder="측정값"></td>
+                                    <td class="py-2 px-3 text-center"><div class="flex gap-1 justify-center"><button class="check-btn pass text-xs px-3 py-1" onclick="setEsdResult('surface_3', 'Pass')">OK</button><button class="check-btn fail text-xs px-3 py-1" onclick="setEsdResult('surface_3', 'Fail')">NG</button></div></td>
+                                </tr>
+                                <tr class="table-row border-b">
+                                    <td class="py-2 px-3 text-center text-sm text-gray-500">4</td>
+                                    <td class="py-2 px-3 text-center"><input type="text" class="input-field input-sm esd-id" data-item="surface_4" value="Z04" style="width:80px; text-align:center;"></td>
+                                    <td class="py-2 px-3 text-center"><input type="text" class="input-field input-sm esd-value" data-item="surface_4" placeholder="측정값"></td>
+                                    <td class="py-2 px-3 text-center"><div class="flex gap-1 justify-center"><button class="check-btn pass text-xs px-3 py-1" onclick="setEsdResult('surface_4', 'Pass')">OK</button><button class="check-btn fail text-xs px-3 py-1" onclick="setEsdResult('surface_4', 'Fail')">NG</button></div></td>
+                                </tr>
+                                <tr class="table-row border-b">
+                                    <td class="py-2 px-3 text-center text-sm text-gray-500">5</td>
+                                    <td class="py-2 px-3 text-center"><input type="text" class="input-field input-sm esd-id" data-item="surface_5" value="Z05" style="width:80px; text-align:center;"></td>
+                                    <td class="py-2 px-3 text-center"><input type="text" class="input-field input-sm esd-value" data-item="surface_5" placeholder="측정값"></td>
+                                    <td class="py-2 px-3 text-center"><div class="flex gap-1 justify-center"><button class="check-btn pass text-xs px-3 py-1" onclick="setEsdResult('surface_5', 'Pass')">OK</button><button class="check-btn fail text-xs px-3 py-1" onclick="setEsdResult('surface_5', 'Fail')">NG</button></div></td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                    
+                    <!-- 작업자용 손목띠/어스링 (5개) -->
+                    <div class="mb-6">
+                        <div class="flex items-center gap-2 mb-3">
+                            <span class="text-sm font-bold text-gray-800">② 작업자용 손목띠 (어스링)</span>
+                            <span class="spec-badge">Spec: 1MΩ ± 10%</span>
+                        </div>
+                        <table class="w-full">
+                            <thead>
+                                <tr class="border-b bg-gray-50">
+                                    <th class="text-center py-2 px-3 text-xs font-semibold text-gray-500 w-16">#</th>
+                                    <th class="text-center py-2 px-3 text-xs font-semibold text-gray-500">작업자 ID</th>
+                                    <th class="text-center py-2 px-3 text-xs font-semibold text-gray-500">측정값</th>
+                                    <th class="text-center py-2 px-3 text-xs font-semibold text-gray-500 w-32">판정</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <tr class="table-row border-b">
+                                    <td class="py-2 px-3 text-center text-sm text-gray-500">1</td>
+                                    <td class="py-2 px-3 text-center"><input type="text" class="input-field input-sm esd-id" data-item="wrist_1" value="Z01" style="width:80px; text-align:center;"></td>
+                                    <td class="py-2 px-3 text-center"><input type="text" class="input-field input-sm esd-value" data-item="wrist_1" placeholder="측정값"></td>
+                                    <td class="py-2 px-3 text-center"><div class="flex gap-1 justify-center"><button class="check-btn pass text-xs px-3 py-1" onclick="setEsdResult('wrist_1', 'Pass')">OK</button><button class="check-btn fail text-xs px-3 py-1" onclick="setEsdResult('wrist_1', 'Fail')">NG</button></div></td>
+                                </tr>
+                                <tr class="table-row border-b">
+                                    <td class="py-2 px-3 text-center text-sm text-gray-500">2</td>
+                                    <td class="py-2 px-3 text-center"><input type="text" class="input-field input-sm esd-id" data-item="wrist_2" value="Z02" style="width:80px; text-align:center;"></td>
+                                    <td class="py-2 px-3 text-center"><input type="text" class="input-field input-sm esd-value" data-item="wrist_2" placeholder="측정값"></td>
+                                    <td class="py-2 px-3 text-center"><div class="flex gap-1 justify-center"><button class="check-btn pass text-xs px-3 py-1" onclick="setEsdResult('wrist_2', 'Pass')">OK</button><button class="check-btn fail text-xs px-3 py-1" onclick="setEsdResult('wrist_2', 'Fail')">NG</button></div></td>
+                                </tr>
+                                <tr class="table-row border-b">
+                                    <td class="py-2 px-3 text-center text-sm text-gray-500">3</td>
+                                    <td class="py-2 px-3 text-center"><input type="text" class="input-field input-sm esd-id" data-item="wrist_3" value="Z03" style="width:80px; text-align:center;"></td>
+                                    <td class="py-2 px-3 text-center"><input type="text" class="input-field input-sm esd-value" data-item="wrist_3" placeholder="측정값"></td>
+                                    <td class="py-2 px-3 text-center"><div class="flex gap-1 justify-center"><button class="check-btn pass text-xs px-3 py-1" onclick="setEsdResult('wrist_3', 'Pass')">OK</button><button class="check-btn fail text-xs px-3 py-1" onclick="setEsdResult('wrist_3', 'Fail')">NG</button></div></td>
+                                </tr>
+                                <tr class="table-row border-b">
+                                    <td class="py-2 px-3 text-center text-sm text-gray-500">4</td>
+                                    <td class="py-2 px-3 text-center"><input type="text" class="input-field input-sm esd-id" data-item="wrist_4" value="Z04" style="width:80px; text-align:center;"></td>
+                                    <td class="py-2 px-3 text-center"><input type="text" class="input-field input-sm esd-value" data-item="wrist_4" placeholder="측정값"></td>
+                                    <td class="py-2 px-3 text-center"><div class="flex gap-1 justify-center"><button class="check-btn pass text-xs px-3 py-1" onclick="setEsdResult('wrist_4', 'Pass')">OK</button><button class="check-btn fail text-xs px-3 py-1" onclick="setEsdResult('wrist_4', 'Fail')">NG</button></div></td>
+                                </tr>
+                                <tr class="table-row border-b">
+                                    <td class="py-2 px-3 text-center text-sm text-gray-500">5</td>
+                                    <td class="py-2 px-3 text-center"><input type="text" class="input-field input-sm esd-id" data-item="wrist_5" value="Z05" style="width:80px; text-align:center;"></td>
+                                    <td class="py-2 px-3 text-center"><input type="text" class="input-field input-sm esd-value" data-item="wrist_5" placeholder="측정값"></td>
+                                    <td class="py-2 px-3 text-center"><div class="flex gap-1 justify-center"><button class="check-btn pass text-xs px-3 py-1" onclick="setEsdResult('wrist_5', 'Pass')">OK</button><button class="check-btn fail text-xs px-3 py-1" onclick="setEsdResult('wrist_5', 'Fail')">NG</button></div></td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
                     
                     <div class="mt-4 p-3 bg-blue-50 rounded-lg text-sm text-blue-700">
                         <i class="fas fa-info-circle mr-2"></i>
@@ -2951,21 +2971,53 @@
                 return;
             }
             
+            // 미입력 항목 체크
+            const missingItems = [];
+            document.querySelectorAll('.esd-value').forEach(input => {
+                const item = input.dataset.item;
+                if (!input.value.trim()) {
+                    const label = item.startsWith('surface') ? '작업대 표면' : '손목띠';
+                    const num = item.split('_')[1];
+                    missingItems.push(`${label} #${num} 측정값`);
+                }
+                if (!esdResults[item]) {
+                    const label = item.startsWith('surface') ? '작업대 표면' : '손목띠';
+                    const num = item.split('_')[1];
+                    missingItems.push(`${label} #${num} 판정`);
+                }
+            });
+            
+            if (missingItems.length > 0) {
+                alert('미입력 항목이 있습니다:\n\n• ' + missingItems.slice(0, 5).join('\n• ') + (missingItems.length > 5 ? `\n... 외 ${missingItems.length - 5}건` : ''));
+                return;
+            }
+            
+            // 측정 데이터 수집 (ID + 측정값 + 판정)
             const measurements = {};
             document.querySelectorAll('.esd-value').forEach(input => {
-                measurements[input.dataset.item] = {
-                    value: input.value,
-                    result: esdResults[input.dataset.item] || null
+                const item = input.dataset.item;
+                const idInput = document.querySelector(`.esd-id[data-item="${item}"]`);
+                measurements[item] = {
+                    workerId: idInput ? idInput.value.trim() : '',
+                    value: input.value.trim(),
+                    result: esdResults[item] || null
                 };
             });
+            
+            // 종합 판정
+            const allResults = Object.values(measurements).map(m => m.result);
+            let overallResult = 'Incomplete';
+            if (allResults.every(r => r === 'Pass')) overallResult = 'Pass';
+            else if (allResults.some(r => r === 'Fail')) overallResult = 'Fail';
             
             const record = {
                 id: Date.now(),
                 period: period,
                 inspector: inspector,
                 measurements: measurements,
+                overallResult: overallResult,
                 remarks: document.getElementById('biyearly-remarks').value,
-                createdAt: new Date().toISOString()
+                createdAt: getLocalDateTimeString()
             };
             
             const data = loadData(STORAGE_KEYS.biyearly);
@@ -2977,7 +3029,7 @@
             }
             saveData(STORAGE_KEYS.biyearly, data);
             
-            alert(`${period} Bi-yearly 점검이 저장되었습니다.`);
+            alert(`${period} Bi-yearly 점검이 저장되었습니다.\n종합 판정: ${overallResult}`);
         }
         
         // ============ Sidebar Status ============
@@ -3091,7 +3143,7 @@
                         date: r.period,
                         type: 'Bi-yearly',
                         inspector: r.inspector,
-                        items: `ESD 접지 점검 (${Object.keys(r.results || {}).length}개 항목)`,
+                        items: `작업대 표면 5개, 손목띠 5개 (${Object.keys(r.measurements || {}).length}개 측정)`,
                         result: r.overallResult || 'Incomplete',
                         remarks: r.remarks
                     });

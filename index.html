@@ -1556,15 +1556,40 @@
         }
         
         function convertSheetsMonthlyRecord(r) {
+            // period가 ISO 날짜 형식("2026-01-31T15:00:00.000Z")일 수 있으므로 YYYY-MM으로 변환
+            let period = String(r.period || '');
+            if (period.includes('T')) {
+                // ISO date → 한국 시간 기준 YYYY-MM 추출
+                const d = new Date(period);
+                d.setHours(d.getHours() + 9); // UTC → KST
+                period = d.getFullYear() + '-' + String(d.getMonth() + 1).padStart(2, '0');
+            } else if (period.length > 7) {
+                period = period.slice(0, 7);
+            }
+            
+            // 날짜 필드도 ISO 변환 처리
+            let glovesOpenDate = String(r.gloves_open_date || '');
+            if (glovesOpenDate.includes('T')) {
+                const d = new Date(glovesOpenDate);
+                d.setHours(d.getHours() + 9);
+                glovesOpenDate = d.toISOString().slice(0, 10);
+            }
+            let glovesExpiry = String(r.gloves_expiry || '');
+            if (glovesExpiry.includes('T')) {
+                const d = new Date(glovesExpiry);
+                d.setHours(d.getHours() + 9);
+                glovesExpiry = d.toISOString().slice(0, 10);
+            }
+            
             return {
-                period: String(r.period || ''),
+                period: period,
                 inspector: r.inspector || '',
                 loadPassValue: r.load_pass_value || '',
                 loadPassResult: r.load_pass_result || '',
                 loadFailValue: r.load_fail_value || '',
                 loadFailResult: r.load_fail_result || '',
-                glovesOpenDate: r.gloves_open_date || '',
-                glovesExpiry: r.gloves_expiry || '',
+                glovesOpenDate: glovesOpenDate,
+                glovesExpiry: glovesExpiry,
                 glovesResult: r.gloves_result || '',
                 mvFixtures: [
                     { num: 1, check1: r.mv_fixture1_check1 || '', check2: r.mv_fixture1_check2 || '', result: r.mv_fixture1_result || '' },
